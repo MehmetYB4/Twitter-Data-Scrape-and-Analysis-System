@@ -110,49 +110,8 @@
 </div>
 
 <!-- Quick Analytics -->
-<div class="row mb-5">
-    <div class="col-lg-8 mb-4">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <i class="bi bi-speedometer2 text-primary"></i>
-                    Sistem Performansı
-                </h5>
-                <button class="btn btn-outline-primary btn-sm" onclick="refreshStats()">
-                    <i class="bi bi-arrow-clockwise"></i> Yenile
-                </button>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <h6>İşlem Hızı (Son 24 Saat)</h6>
-                        <canvas id="performanceChart" width="400" height="200"></canvas>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>Analiz Türü Dağılımı</h6>
-                        <canvas id="analysisTypeChart" width="400" height="200"></canvas>
-                        
-                        <div class="mt-3">
-                            <div class="d-flex justify-content-between mb-1">
-                                <span class="small">Ortalama Süre:</span>
-                                <span class="small fw-bold" id="avgDuration">Hesaplanıyor...</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-1">
-                                <span class="small">En Hızlı Analiz:</span>
-                                <span class="small fw-bold" id="fastestAnalysis">-</span>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <span class="small">Sistem Yükü:</span>
-                                <span class="small fw-bold" id="systemLoad">Düşük</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-4 mb-4">
+<div class="row mb-5">    
+    <div class="col-lg-6 mb-4">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-transparent border-0">
                 <h5 class="mb-0">
@@ -181,17 +140,44 @@
                 <h6>Sistem Durumu</h6>
                 <div class="small">
                     <div class="d-flex justify-content-between mb-1">
-                        <span>CPU Kullanımı:</span>
-                        <span class="fw-bold text-success" id="cpuUsage">15%</span>
+                        <span>Durum:</span>
+                        <span class="fw-bold text-success" id="systemStatus">Çevrimiçi</span>
                     </div>
                     <div class="d-flex justify-content-between mb-1">
-                        <span>Bellek Kullanımı:</span>
-                        <span class="fw-bold text-info" id="memoryUsage">234 MB</span>
+                        <span>Son Güncelleme:</span>
+                        <span class="fw-bold text-info" id="lastUpdate">Az önce</span>
                     </div>
                     <div class="d-flex justify-content-between">
-                        <span>Disk Alanı:</span>
-                        <span class="fw-bold text-warning" id="diskUsage">1.2 GB</span>
+                        <span>Versiyon:</span>
+                        <span class="fw-bold text-warning" id="version">v2.1.0</span>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="mb-0">
+                    <i class="bi bi-graph-up text-info"></i>
+                    Son Analizler
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="recentAnalyzesList">
+                    <div class="text-center text-muted">
+                        <div class="spinner-border spinner-border-sm" role="status">
+                            <span class="visually-hidden">Yükleniyor...</span>
+                        </div>
+                        <p class="mt-2 mb-0">Son analizler yükleniyor...</p>
+                    </div>
+                </div>
+                
+                <div class="mt-3 text-center">
+                    <a href="/sonuclar" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-eye"></i> Tüm Analizleri Görüntüle
+                    </a>
                 </div>
             </div>
         </div>
