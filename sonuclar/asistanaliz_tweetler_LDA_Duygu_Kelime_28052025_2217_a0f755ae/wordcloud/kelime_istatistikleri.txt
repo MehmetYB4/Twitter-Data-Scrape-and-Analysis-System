@@ -1,0 +1,60 @@
+KELIME İSTATİSTİKLERİ
+==================================================
+
+Toplam metin sayısı: 213
+Toplam benzersiz kelime: 56
+Toplam kelime kullanımı: 1726
+Ortalama kelime uzunluğu: 6.3
+
+EN SIK KULLANILAN 50 KELİME:
+------------------------------
+ 1. asist          :  432 kez
+ 2. analiz         :  432 kez
+ 3. spor           :  267 kez
+ 4. trt            :  252 kez
+ 5. geldi          :   22 kez
+ 6. sportscenter   :   21 kez
+ 7. çok           :   21 kez
+ 8. trabzonspor    :   17 kez
+ 9. agüero        :   14 kez
+10. manchester     :   12 kez
+11. city           :   12 kez
+12. ultras         :   12 kez
+13. bodø           :   12 kez
+14. bayern         :   12 kez
+15. fatih          :   10 kez
+16. için          :   10 kez
+17. yagüe         :    9 kez
+18. münchen       :    9 kez
+19. league         :    9 kez
+20. lig            :    8 kez
+21. kızı           :    8 kez
+22. kupa           :    7 kez
+23. erdal          :    6 kez
+24. hoş           :    6 kez
+25. arda           :    6 kez
+26. saeid          :    6 kez
+27. majiqu         :    6 kez
+28. basketball     :    6 kez
+29. champions      :    6 kez
+30. şampiyonu     :    5 kez
+31. harika         :    5 kez
+32. transfer       :    5 kez
+33. ismail         :    4 kez
+34. kartal         :    4 kez
+35. basketbol      :    4 kez
+36. yusuf          :    3 kez
+37. yazıcı         :    3 kez
+38. dönemi        :    3 kez
+39. uefa           :    3 kez
+40. europa         :    3 kez
+41. futebol        :    3 kez
+42. cristiano      :    3 kez
+43. arazinin       :    2 kez
+44. tahsisi        :    2 kez
+45. babam          :    2 kez
+46. galatasaray    :    2 kez
+47. efsane         :    2 kez
+48. gerçekten     :    2 kez
+49. beni           :    2 kez
+50. ilk            :    2 kez

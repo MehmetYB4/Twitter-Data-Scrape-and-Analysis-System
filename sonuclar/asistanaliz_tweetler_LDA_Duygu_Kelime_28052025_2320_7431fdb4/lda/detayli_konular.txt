@@ -1,0 +1,39 @@
+DETAYLI KONU ANALİZİ
+==================================================
+
+KONU 1:
+--------------------
+0.037*"293" + 0.037*"160" + 0.027*"league" + 0.019*"şampiyonlar" + 0.019*"basketball" + 0.019*"champions" + 0.019*"ligi" + 0.013*"paul" + 0.013*"basketbol" + 0.013*"0:17"
+
+En önemli kelimeler:
+  • 293: 0.0372
+  • 160: 0.0372
+  • league: 0.0270
+  • şampiyonlar: 0.0191
+  • basketball: 0.0190
+  • champions: 0.0190
+  • ligi: 0.0189
+  • paul: 0.0130
+  • basketbol: 0.0128
+  • 0:17: 0.0127
+
+==================================================
+
+KONU 2:
+--------------------
+0.033*"ile" + 0.032*"manchester" + 0.024*"gidiyor." + 0.024*"casemiro" + 0.024*"united," + 0.024*"san" + 0.024*"mames'e" + 0.019*"bir" + 0.017*"sonra" + 0.015*"için"
+
+En önemli kelimeler:
+  • ile: 0.0326
+  • manchester: 0.0320
+  • gidiyor.: 0.0243
+  • casemiro: 0.0243
+  • united,: 0.0243
+  • san: 0.0240
+  • mames'e: 0.0240
+  • bir: 0.0190
+  • sonra: 0.0170
+  • için: 0.0155
+
+==================================================
+

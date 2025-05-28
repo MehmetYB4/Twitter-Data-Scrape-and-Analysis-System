@@ -1,0 +1,39 @@
+DETAYLI KONU ANALİZİ
+==================================================
+
+KONU 1:
+--------------------
+0.090*"league" + 0.083*"champions" + 0.083*"basketball" + 0.083*"saeid" + 0.083*"majiqu" + 0.056*"ismail" + 0.056*"basketbol" + 0.056*"kartal" + 0.041*"sportscenter" + 0.037*"trabzonspor"
+
+En önemli kelimeler:
+  • league: 0.0897
+  • champions: 0.0829
+  • basketball: 0.0829
+  • saeid: 0.0829
+  • majiqu: 0.0829
+  • ismail: 0.0558
+  • basketbol: 0.0558
+  • kartal: 0.0558
+  • sportscenter: 0.0414
+  • trabzonspor: 0.0370
+
+==================================================
+
+KONU 2:
+--------------------
+0.484*"spor" + 0.433*"trt" + 0.023*"geldi" + 0.021*"çok" + 0.011*"yagüe" + 0.005*"transfer" + 0.001*"için" + 0.001*"fatih" + 0.001*"trabzonspor" + 0.001*"kızı"
+
+En önemli kelimeler:
+  • spor: 0.4844
+  • trt: 0.4334
+  • geldi: 0.0235
+  • çok: 0.0206
+  • yagüe: 0.0105
+  • transfer: 0.0051
+  • için: 0.0009
+  • fatih: 0.0009
+  • trabzonspor: 0.0009
+  • kızı: 0.0009
+
+==================================================
+

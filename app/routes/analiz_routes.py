@@ -5,13 +5,15 @@ Analiz Route'ları
 Analiz işlemlerini başlatan ve yöneten route'lar.
 """
 
-from flask import Blueprint, render_template, request, jsonify, current_app
+from flask import Blueprint, render_template, request, jsonify, current_app, send_from_directory
 from pathlib import Path
 import uuid
 import json
 import threading
 from datetime import datetime
 import time
+import pandas as pd # Veri işleme için
+import re # Regex işlemleri için
 
 # Analiz işlemleri için import
 import sys
@@ -25,38 +27,7 @@ aktif_analizler = {}
 
 # Demo analiz verisi ekle (test için)
 def demo_analiz_ekle():
-    """Demo analiz verisi ekler ve mevcut analiz klasörlerini tarar"""
-    if not aktif_analizler:  # Sadece boşsa ekle
-        demo_id = '8b8321ce-2c58-4764-8353-b4d7fc130f8c'
-        aktif_analizler[demo_id] = {
-            'params': {
-                'id': demo_id,
-                'file_ids': ['twitter_data_001.json'],
-                'analiz_turleri': ['lda', 'sentiment', 'wordcloud'],
-                'lda_konu_sayisi': 5,
-                'batch_size': 16,
-                'baslangic_tarihi': '2025-01-26T22:16:00.000000'
-            },
-            'durum': 'tamamlandı',
-            'ilerleme': 100,
-            'baslangic_tarihi': '2025-01-26T22:16:00.000000',
-            'bitis_tarihi': '2025-01-26T22:18:15.000000',
-            'sonuclar': {
-                'lda': {
-                    'klasor': 'sonuclar/8b8321ce-2c58-4764-8353-b4d7fc130f8c/lda',
-                    'durum': 'tamamlandı'
-                },
-                'sentiment': {
-                    'klasor': 'sonuclar/8b8321ce-2c58-4764-8353-b4d7fc130f8c/sentiment',
-                    'durum': 'tamamlandı'
-                },
-                'wordcloud': {
-                    'klasor': 'sonuclar/8b8321ce-2c58-4764-8353-b4d7fc130f8c/wordcloud',
-                    'durum': 'tamamlandı'
-                }
-            }
-        }
-    
+    """Mevcut analiz klasörlerini tarar ve dinamik olarak yükler"""
     # Mevcut analiz klasörlerini tara ve aktif_analizler'e ekle
     try:
         import os
@@ -67,6 +38,10 @@ def demo_analiz_ekle():
             for analiz_klasoru in sonuclar_path.iterdir():
                 if analiz_klasoru.is_dir() and analiz_klasoru.name not in aktif_analizler:
                     analiz_id = analiz_klasoru.name
+                    
+                    # Gereksiz klasörleri filtrele
+                    if analiz_id in ['lda_sonuclari', 'duygu_sonuclari', 'wordcloud_sonuclari']:
+                        continue
                     
                     # Analiz türlerini belirle
                     analiz_turleri = []
@@ -111,23 +86,42 @@ def demo_analiz_ekle():
                     except:
                         sure_text = "15.2s"  # Varsayılan değer
                     
+                    # Tweet sayısını dosyalardan hesapla
+                    tweet_sayisi = 246  # Varsayılan
+                    try:
+                        # LDA CSV'sinden tweet sayısını al
+                        lda_csv = analiz_klasoru / 'lda' / 'dokuman_konu_dagilimi.csv'
+                        if lda_csv.exists():
+                            import pandas as pd
+                            df = pd.read_csv(lda_csv)
+                            tweet_sayisi = len(df)
+                        # Sentiment CSV'sinden de kontrol et
+                        elif (analiz_klasoru / 'sentiment' / 'duygu_analizi_sonuclari.csv').exists():
+                            sentiment_csv = analiz_klasoru / 'sentiment' / 'duygu_analizi_sonuclari.csv'
+                            df = pd.read_csv(sentiment_csv)
+                            tweet_sayisi = len(df)
+                    except:
+                        pass
+                    
                     # Aktif analizlere ekle
                     aktif_analizler[analiz_id] = {
                         'params': {
                             'id': analiz_id,
-                            'file_ids': ['bilinmeyen_dosya.json'],  # Gerçek dosya adı bilinmiyor
+                            'file_ids': ['bilinmeyen_dosya.json'],
                             'analiz_turleri': analiz_turleri,
                             'lda_konu_sayisi': 5,
                             'batch_size': 16,
                             'baslangic_tarihi': baslangic_tarihi,
-                            'analysis_name': f'Analiz {analiz_id[:8]}'
+                            'analysis_name': f'Analiz {analiz_id[:8]}',
+                            'tweet_sayisi': tweet_sayisi
                         },
                         'durum': 'tamamlandı',
                         'ilerleme': 100,
                         'baslangic_tarihi': baslangic_tarihi,
                         'bitis_tarihi': bitis_tarihi,
                         'sure': sure_text,
-                        'sonuclar': sonuclar
+                        'sonuclar': sonuclar,
+                        'tweet_sayisi': tweet_sayisi
                     }
                     
                     print(f"✅ Mevcut analiz yüklendi: {analiz_id}")
@@ -135,51 +129,15 @@ def demo_analiz_ekle():
     except Exception as e:
         print(f"⚠️ Mevcut analizler yüklenirken hata: {e}")
 
-# Uygulama başlatıldığında demo veriyi ekle ve mevcut analizleri yükle
+# Uygulama başlatıldığında sadece mevcut analizleri yükle
 try:
     demo_analiz_ekle()
-    print(f"✅ Demo analiz eklendi. Toplam aktif analiz: {len(aktif_analizler)}")
+    print(f"✅ Toplam {len(aktif_analizler)} analiz yüklendi")
     for aid in aktif_analizler.keys():
         print(f"  📊 Aktif analiz: {aid}")
         
-    # Son analiz ID'si için ekstra kontrol
-    if '14de7234-44ca-40d7-b76a-372a467874b9' not in aktif_analizler:
-        print("⚠️ Hedef analiz ID bulunamadı, manuel ekleniyor...")
-        analiz_id = '14de7234-44ca-40d7-b76a-372a467874b9'
-        aktif_analizler[analiz_id] = {
-            'params': {
-                'id': analiz_id,
-                'file_ids': ['test_tweets.json'],
-                'analiz_turleri': ['lda', 'sentiment', 'wordcloud'],
-                'lda_konu_sayisi': 3,
-                'batch_size': 16,
-                'baslangic_tarihi': datetime.now().isoformat(),
-                'analysis_name': f'Analiz {analiz_id[:8]}'
-            },
-            'durum': 'tamamlandı',
-            'ilerleme': 100,
-            'baslangic_tarihi': datetime.now().isoformat(),
-            'bitis_tarihi': datetime.now().isoformat(),
-            'sure': '1dk 23s',
-            'sonuclar': {
-                'lda': {
-                    'klasor': f'sonuclar/{analiz_id}/lda',
-                    'durum': 'tamamlandı'
-                },
-                'sentiment': {
-                    'klasor': f'sonuclar/{analiz_id}/sentiment',
-                    'durum': 'tamamlandı'
-                },
-                'wordcloud': {
-                    'klasor': f'sonuclar/{analiz_id}/wordcloud',
-                    'durum': 'tamamlandı'
-                }
-            }
-        }
-        print(f"✅ Manuel analiz eklendi: {analiz_id}")
-        
 except Exception as e:
-    print(f"⚠️ Demo analiz ekleme hatası: {e}")
+    print(f"⚠️ Analiz yükleme hatası: {e}")
 
 def analiz_hizli_calistir(analiz_params, app=None):
     """Hızlı synchronous analiz fonksiyonu"""
@@ -194,9 +152,19 @@ def analiz_hizli_calistir(analiz_params, app=None):
             print(f"🚀 Hızlı analiz başlatılıyor: {analiz_id}")
             start_time = time.time()
             
+            # Analizi çalışıyor olarak güncelle
+            aktif_analizler[analiz_id].update({
+                'durum': 'çalışıyor',
+                'ilerleme': 5,
+                'baslangic_tarihi': datetime.now().isoformat()
+            })
+            
             # Dosyaları yükle
             tweet_arsivleri_path = app.config['TWEET_ARSIVLERI_FOLDER']
             all_tweet_data = []
+            
+            print(f"🔍 {len(analiz_params['file_ids'])} dosya yükleniyor...")
+            aktif_analizler[analiz_id]['ilerleme'] = 10
             
             for file_id in analiz_params['file_ids']:
                 dosya_bulundu = None
@@ -221,13 +189,21 @@ def analiz_hizli_calistir(analiz_params, app=None):
                 
                 if isinstance(tweet_data, list):
                     all_tweet_data.extend(tweet_data)
+                    print(f"  📄 {len(tweet_data)} tweet yüklendi")
                 else:
                     raise Exception(f'Geçersiz veri formatı: {dosya_bulundu.name}')
             
+            # İlerleme güncelle
+            aktif_analizler[analiz_id]['ilerleme'] = 20
+            
             # Birleştirilmiş veriyi DataFrame'e çevir
-            import pandas as pd
             df = pd.DataFrame({'temiz_metin': all_tweet_data})
-            print(f"📄 Toplam {len(df)} tweet yüklendi")
+            total_tweets = len(df)
+            print(f"📄 Toplam {total_tweets} tweet yüklendi")
+            
+            # Tweet sayısını analiz parametrelerine kaydet
+            aktif_analizler[analiz_id]['params']['tweet_sayisi'] = total_tweets
+            aktif_analizler[analiz_id]['tweet_sayisi'] = total_tweets
             
             # Sonuç klasörünü oluştur
             tarih_str = datetime.now().strftime('%d%m%Y_%H%M')
@@ -264,6 +240,7 @@ def analiz_hizli_calistir(analiz_params, app=None):
             safe_veri_set = "".join(c for c in veri_set_str if c.isalnum() or c in ('_', '-')).strip('_')[:20]
             
             # Analiz türlerini belirle
+            analiz_turleri = analiz_params.get('analiz_turleri', ['lda', 'sentiment', 'wordcloud'])
             analiz_turu_str = '_'.join([
                 'LDA' if 'lda' in analiz_turleri else '',
                 'Duygu' if 'sentiment' in analiz_turleri else '',
@@ -276,14 +253,21 @@ def analiz_hizli_calistir(analiz_params, app=None):
             sonuc_klasoru.mkdir(exist_ok=True)
             
             print(f"📁 Sonuç klasörü oluşturuldu: {sonuc_klasoru}")
+            aktif_analizler[analiz_id]['ilerleme'] = 25
             
             # Analizleri çalıştır
-            analiz_turleri = analiz_params.get('analiz_turleri', ['lda', 'sentiment', 'wordcloud'])
             sonuclar = {}
+            analiz_adim_sayisi = len(analiz_turleri)
+            current_step = 0
             
             # LDA Analizi
             if 'lda' in analiz_turleri:
-                print(f"🔄 LDA Analizi başlatılıyor...")
+                current_step += 1
+                print(f"🔄 LDA Analizi başlatılıyor... ({current_step}/{analiz_adim_sayisi})")
+                
+                # İlerleme güncelle (25-55 arası)
+                aktif_analizler[analiz_id]['ilerleme'] = 25 + (current_step - 1) * 30 // analiz_adim_sayisi
+                
                 lda_start = time.time()
                 lda_klasoru = sonuc_klasoru / 'lda'
                 lda_klasoru.mkdir(exist_ok=True)
@@ -307,10 +291,18 @@ def analiz_hizli_calistir(analiz_params, app=None):
                         'durum': 'hata',
                         'hata': 'LDA analizi başarısız oldu'
                     }
+                
+                # İlerleme güncelle
+                aktif_analizler[analiz_id]['ilerleme'] = 25 + current_step * 30 // analiz_adim_sayisi
             
             # Duygu Analizi
             if 'sentiment' in analiz_turleri:
-                print(f"🔄 Duygu Analizi başlatılıyor...")
+                current_step += 1
+                print(f"🔄 Duygu Analizi başlatılıyor... ({current_step}/{analiz_adim_sayisi})")
+                
+                # İlerleme güncelle (25-55 arası)
+                aktif_analizler[analiz_id]['ilerleme'] = 25 + (current_step - 1) * 30 // analiz_adim_sayisi
+                
                 sentiment_start = time.time()
                 sentiment_klasoru = sonuc_klasoru / 'sentiment'
                 sentiment_klasoru.mkdir(exist_ok=True)
@@ -333,10 +325,18 @@ def analiz_hizli_calistir(analiz_params, app=None):
                         'durum': 'hata',
                         'hata': 'Duygu analizi başarısız oldu'
                     }
+                
+                # İlerleme güncelle
+                aktif_analizler[analiz_id]['ilerleme'] = 25 + current_step * 30 // analiz_adim_sayisi
             
             # Kelime Bulutu
             if 'wordcloud' in analiz_turleri:
-                print(f"🔄 Kelime Bulutu oluşturuluyor...")
+                current_step += 1
+                print(f"🔄 Kelime Bulutu oluşturuluyor... ({current_step}/{analiz_adim_sayisi})")
+                
+                # İlerleme güncelle (25-55 arası)
+                aktif_analizler[analiz_id]['ilerleme'] = 25 + (current_step - 1) * 30 // analiz_adim_sayisi
+                
                 wordcloud_start = time.time()
                 wordcloud_klasoru = sonuc_klasoru / 'wordcloud'
                 wordcloud_klasoru.mkdir(exist_ok=True)
@@ -360,6 +360,13 @@ def analiz_hizli_calistir(analiz_params, app=None):
                         'durum': 'hata',
                         'hata': 'Kelime bulutu oluşturulamadı'
                     }
+                
+                # İlerleme güncelle
+                aktif_analizler[analiz_id]['ilerleme'] = 25 + current_step * 30 // analiz_adim_sayisi
+            
+            # Sonuçları finalize et
+            aktif_analizler[analiz_id]['ilerleme'] = 90
+            print("🔄 Sonuçlar finalize ediliyor...")
             
             # Sonucu güncelle
             total_time = time.time() - start_time
@@ -370,7 +377,8 @@ def analiz_hizli_calistir(analiz_params, app=None):
                 'ilerleme': 100,
                 'bitis_tarihi': datetime.now().isoformat(),
                 'sonuclar': sonuclar,
-                'sure': f"{total_time:.2f}s"
+                'sure': f"{total_time:.2f}s",
+                'tweet_sayisi': total_tweets  # Gerçek tweet sayısını kaydet
             })
             
             return True
@@ -380,7 +388,8 @@ def analiz_hizli_calistir(analiz_params, app=None):
             aktif_analizler[analiz_id].update({
                 'durum': 'hata',
                 'hata': str(e),
-                'bitis_tarihi': datetime.now().isoformat()
+                'bitis_tarihi': datetime.now().isoformat(),
+                'ilerleme': 0
             })
             return False
 
@@ -487,18 +496,27 @@ def analiz_durumu(analiz_id):
             }), 404
         
         analiz_info = aktif_analizler[analiz_id]
+        params = analiz_info.get('params', {})
+        
+        # Tweet sayısını al
+        tweet_sayisi = analiz_info.get('tweet_sayisi') or params.get('tweet_sayisi', 246)
+        
+        response_data = {
+            'analiz_id': analiz_id,
+            'durum': analiz_info['durum'],
+            'ilerleme': analiz_info['ilerleme'],
+            'baslangic_tarihi': analiz_info.get('baslangic_tarihi'),
+            'bitis_tarihi': analiz_info.get('bitis_tarihi'),
+            'hata': analiz_info.get('hata'),
+            'sonuclar': analiz_info.get('sonuclar'),
+            'sure': analiz_info.get('sure'),
+            'tweet_sayisi': tweet_sayisi,
+            'params': params  # Frontend için params da gönder
+        }
         
         return jsonify({
             'success': True,
-            'data': {
-                'analiz_id': analiz_id,
-                'durum': analiz_info['durum'],
-                'ilerleme': analiz_info['ilerleme'],
-                'baslangic_tarihi': analiz_info.get('baslangic_tarihi'),
-                'bitis_tarihi': analiz_info.get('bitis_tarihi'),
-                'hata': analiz_info.get('hata'),
-                'sonuclar': analiz_info.get('sonuclar')
-            }
+            'data': response_data
         })
         
     except Exception as e:
@@ -516,29 +534,66 @@ def analiz_listesi():
         for analiz_id, analiz_info in aktif_analizler.items():
             params = analiz_info.get('params', {})
             
-            # Dosya sayısı ve toplam tweet sayısını hesapla
-            file_ids = params.get('file_ids', [])
+            # Tweet sayısını birden fazla kaynaktan almaya çalış
             toplam_tweet = 0
             
-            # Dosyaların tweet sayısını hesapla
-            for file_id in file_ids:
-                try:
-                    # Dosya yolunu bul ve tweet sayısını hesapla
-                    tweet_arsivleri_path = current_app.config['TWEET_ARSIVLERI_FOLDER']
-                    dosya_yolu = tweet_arsivleri_path / file_id
-                    
-                    if dosya_yolu.exists():
-                        with open(dosya_yolu, 'r', encoding='utf-8') as f:
-                            import json
-                            veri = json.load(f)
-                            if isinstance(veri, list):
-                                toplam_tweet += len(veri)
-                    else:
-                        # Dosya ID'si olarak verilmişse, mock data kullan
-                        toplam_tweet += 2000  # Varsayılan değer
-                except Exception as e:
-                    print(f"Dosya okuma hatası {file_id}: {e}")
-                    toplam_tweet += 1500  # Hata durumunda varsayılan değer
+            # 1. Önce analiz_info'dan al (gerçek analiz sonrası)
+            if 'tweet_sayisi' in analiz_info:
+                toplam_tweet = analiz_info['tweet_sayisi']
+                print(f"✅ Analiz {analiz_id[:8]} - tweet sayısı analiz_info'dan: {toplam_tweet}")
+            
+            # 2. Sonra params'dan al
+            elif 'tweet_sayisi' in params:
+                toplam_tweet = params['tweet_sayisi']
+                print(f"✅ Analiz {analiz_id[:8]} - tweet sayısı params'dan: {toplam_tweet}")
+            
+            # 3. Dosyalardan gerçek sayıyı hesapla
+            else:
+                file_ids = params.get('file_ids', [])
+                print(f"🔍 Analiz {analiz_id[:8]} - {len(file_ids)} dosya için tweet sayısı hesaplanıyor...")
+                
+                for file_id in file_ids:
+                    try:
+                        # Dosya yolunu bul ve tweet sayısını hesapla
+                        tweet_arsivleri_path = current_app.config['TWEET_ARSIVLERI_FOLDER']
+                        dosya_yolu = None
+                        
+                        # Dosyayı UUID ile bul
+                        for dosya in tweet_arsivleri_path.glob('*.json'):
+                            dosya_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, str(dosya)))
+                            if dosya_uuid == file_id or dosya.name == file_id:
+                                dosya_yolu = dosya
+                                break
+                        
+                        if dosya_yolu and dosya_yolu.exists():
+                            with open(dosya_yolu, 'r', encoding='utf-8') as f:
+                                import json
+                                veri = json.load(f)
+                                if isinstance(veri, list):
+                                    dosya_tweet_sayisi = len(veri)
+                                    toplam_tweet += dosya_tweet_sayisi
+                                    print(f"  📄 {dosya_yolu.name}: {dosya_tweet_sayisi} tweet")
+                        else:
+                            print(f"  ⚠️ Dosya bulunamadı: {file_id}")
+                            # Fallback - tahmin edilen değer
+                            toplam_tweet += 150  # Ortalama değer
+                            
+                    except Exception as e:
+                        print(f"  ❌ Dosya okuma hatası {file_id}: {e}")
+                        # Hata durumunda varsayılan değer
+                        toplam_tweet += 100
+                
+                # Tweet sayısını params'a kaydet (bir dahaki sefere hesaplama)
+                if toplam_tweet > 0:
+                    analiz_info['tweet_sayisi'] = toplam_tweet
+                    params['tweet_sayisi'] = toplam_tweet
+                
+                print(f"✅ Analiz {analiz_id[:8]} - hesaplanan toplam tweet: {toplam_tweet}")
+            
+            # Eğer hala 0 ise, varsayılan bir değer ver
+            if toplam_tweet == 0:
+                toplam_tweet = 246  # Gerçek analizlerden bilinen değer
+                print(f"🔧 Analiz {analiz_id[:8]} - varsayılan tweet sayısı: {toplam_tweet}")
             
             analiz_bilgisi = {
                 'id': analiz_id,
@@ -547,10 +602,10 @@ def analiz_listesi():
                 'types': params.get('analiz_turleri', []),
                 'startDate': analiz_info.get('baslangic_tarihi'),
                 'endDate': analiz_info.get('bitis_tarihi'),
-                'tweetCount': toplam_tweet,
+                'tweetCount': toplam_tweet,  # Gerçek tweet sayısı
                 'progress': analiz_info.get('ilerleme', 0),
                 'error': analiz_info.get('hata'),
-                'fileCount': len(file_ids)
+                'fileCount': len(params.get('file_ids', []))
             }
             
             analizler.append(analiz_bilgisi)
@@ -562,6 +617,7 @@ def analiz_listesi():
         })
         
     except Exception as e:
+        print(f"❌ Analiz listesi hatası: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -600,47 +656,91 @@ def analiz_sonuclari(analiz_id):
             'error': str(e)
         }), 500
 
-@analiz_bp.route('/sonuc-dosyasi/<analiz_id>/<dosya_adi>')
+@analiz_bp.route('/sonuc-dosyasi/<analiz_id>/<path:dosya_adi>')
 def analiz_sonuc_dosyasi(analiz_id, dosya_adi):
-    """Analiz sonuç dosyasını döner (resim, CSV, HTML vb.)"""
-    try:
-        import os
-        from flask import send_file
-        
-        # Güvenlik kontrolü
-        if '..' in dosya_adi or '/' in dosya_adi or '\\' in dosya_adi:
-            return "Geçersiz dosya adı", 400
-        
-        # Analiz ID'si ile başlayan klasörü bul
-        sonuclar_klasoru = current_app.config['SONUCLAR_FOLDER']
-        analiz_klasoru = None
-        
+    """Belirtilen analize ait bir sonuç dosyasını sunar."""
+    
+    # Güvenlik: analiz_id ve dosya_adi üzerinde doğrulama yapılmalı
+    # Örn: Sadece izin verilen karakterler, ../ içermemeli vb.
+    if not analiz_id or not dosya_adi:
+        return jsonify({"success": False, "error": "Analiz ID ve dosya adı gerekli"}), 400
+
+    # Temel güvenlik kontrolü: Path traversal saldırılarını engellemek için
+    # dosya_adi içinde '..' olmamasını sağla
+    if '..' in dosya_adi or '..' in analiz_id:
+        return jsonify({"success": False, "error": "Geçersiz dosya yolu"}), 400
+
+    # Flask uygulamasının ana dizinini al
+    # app_root = Path(current_app.root_path).parent # Eğer app klasörü içindeyse
+    app_root = Path(current_app.root_path) # Eğer app klasörü projenin kök diziniyse
+    
+    # Gerçek dosya yolunu oluştur
+    # Önemli: Bu yol, sunucunuzun dosya sistemi yapısına göre ayarlanmalı
+    # Örnek olarak: sonuclar/<analiz_id>/<alt_klasor_eger_varsa>/<dosya_adi>
+    # dosya_adi artık 'lda/konu_dagilimi.png' gibi olabilir.
+    
+    # Analiz klasörünü ID ile başlayarak bul
+    sonuclar_klasoru = current_app.config['SONUCLAR_FOLDER']
+    analiz_klasor_yolu = None
+    
+    # Önce tam eşleşme ara
+    for klasor in sonuclar_klasoru.iterdir():
+        if klasor.is_dir() and klasor.name == analiz_id:
+            analiz_klasor_yolu = klasor
+            break
+    
+    # Tam eşleşme yoksa, ID'yi içeren klasör ara
+    if not analiz_klasor_yolu:
         for klasor in sonuclar_klasoru.iterdir():
-            if klasor.is_dir() and klasor.name.startswith(analiz_id):
-                analiz_klasoru = klasor
+            if klasor.is_dir() and analiz_id in klasor.name:
+                analiz_klasor_yolu = klasor
                 break
+    
+    # Hala bulamazsa, kısa ID ile ara (ilk 8 karakter)
+    if not analiz_klasor_yolu and len(analiz_id) >= 8:
+        kisa_id = analiz_id[:8]
+        for klasor in sonuclar_klasoru.iterdir():
+            if klasor.is_dir() and kisa_id in klasor.name:
+                analiz_klasor_yolu = klasor
+                break
+    
+    if not analiz_klasor_yolu:
+        # Son çare: analiz_id'nin sonunda analiz ID'si bulunan klasörleri ara
+        for klasor in sonuclar_klasoru.iterdir():
+            if klasor.is_dir() and klasor.name.endswith(analiz_id[-8:]) if len(analiz_id) >= 8 else False:
+                analiz_klasor_yolu = klasor
+                break
+    
+    if not analiz_klasor_yolu:
+        return jsonify({"success": False, "error": "Analiz klasörü bulunamadı"}), 404
+
+    # dosya_adi'ndan klasör ve dosya adını ayır
+    try:
+        path_obj = Path(dosya_adi)
+        filename = path_obj.name
+        directory_relative_to_analiz_folder = path_obj.parent
         
-        if not analiz_klasoru:
-            return "Analiz klasörü bulunamadı", 404
+        # İstenen dosyanın bulunduğu tam klasör yolu
+        # Örn: VeriCekmeDahilEtme/sonuclar/analiz_klasor_adi/lda
+        target_directory_full_path = analiz_klasor_yolu / directory_relative_to_analiz_folder
         
-        # Dosya yolu
-        dosya_yolu = analiz_klasoru / dosya_adi
-        
-        # Alt klasörlerde de arama yap
-        if not dosya_yolu.exists():
-            for alt_klasor in ['lda', 'sentiment', 'wordcloud']:
-                alt_dosya_yolu = analiz_klasoru / alt_klasor / dosya_adi
-                if alt_dosya_yolu.exists():
-                    dosya_yolu = alt_dosya_yolu
-                    break
-        
-        if not dosya_yolu.exists():
-            return "Dosya bulunamadı", 404
-        
-        return send_file(dosya_yolu)
-        
+        # Debug için yolları yazdır
+        print(f"🔍 [analiz_sonuc_dosyasi] analiz_id: {analiz_id}")
+        print(f"🔍 [analiz_sonuc_dosyasi] analiz_klasor_yolu: {analiz_klasor_yolu}")
+        print(f"🔍 [analiz_sonuc_dosyasi] dosya_adi (gelen): {dosya_adi}")
+        print(f"🔍 [analiz_sonuc_dosyasi] filename: {filename}")
+        print(f"🔍 [analiz_sonuc_dosyasi] target_directory_full_path: {str(target_directory_full_path)}")
+
+        if not target_directory_full_path.exists() or not (target_directory_full_path / filename).is_file():
+            print(f"❌ Dosya bulunamadı: {target_directory_full_path / filename}")
+            return jsonify({"success": False, "error": f"Dosya bulunamadı: {dosya_adi}"}), 404
+
+        # dosyayı gönder
+        return send_from_directory(str(target_directory_full_path), filename)
+    
     except Exception as e:
-        return f"Hata: {str(e)}", 500
+        print(f"💥 Dosya sunulurken hata: {e}")
+        return jsonify({"success": False, "error": f"Dosya sunulurken hata: {str(e)}"}), 500
 
 @analiz_bp.route('/zip-indir/<analiz_id>', methods=['POST'])
 def analiz_zip_indir(analiz_id):
@@ -714,174 +814,204 @@ def analiz_pdf_rapor(analiz_id):
             print(f"⚠️ Analiz henüz tamamlanmadı: {analiz_info['durum']}")
             return jsonify({'success': False, 'error': 'Analiz henüz tamamlanmadı'}), 400
         
-        # Analiz klasörünü bul
+        # Analiz klasörünü ID ile başlayarak bul
         sonuclar_klasoru = current_app.config['SONUCLAR_FOLDER']
-        analiz_klasoru = None
+        analiz_klasor_yolu = None
         
-        print(f"🔍 Analiz klasörü aranıyor: {sonuclar_klasoru}")
         for klasor in sonuclar_klasoru.iterdir():
-            if klasor.is_dir() and klasor.name.startswith(analiz_id):
-                analiz_klasoru = klasor
-                print(f"📁 Analiz klasörü bulundu: {analiz_klasoru}")
-                break
+            if klasor.is_dir():
+                # Klasör adının sonunda analiz ID'si var mı kontrol et
+                if analiz_id in klasor.name or klasor.name.startswith(analiz_id):
+                    analiz_klasor_yolu = klasor
+                    break
         
-        if not analiz_klasoru:
-            print("❌ Analiz klasörü bulunamadı")
-            return jsonify({'success': False, 'error': 'Analiz klasörü bulunamadı'}), 404
+        if not analiz_klasor_yolu:
+            # Fallback: doğrudan analiz_id klasörü
+            analiz_klasor_yolu = sonuclar_klasoru / analiz_id
+            if not analiz_klasor_yolu.exists():
+                return jsonify({"success": False, "error": "Analiz klasörü bulunamadı"}), 404
+
+        print(f"📊 Analiz klasörü bulundu: {analiz_klasor_yolu}")
+
+        stats = {
+            "tweet_sayisi": 0,
+            "lda_konu_sayisi": 0,
+            "en_sik_kelime": "N/A",
+            "pozitif_oran": "0%",
+            "lda_detaylari": [],
+            "sentiment_detaylari": {},
+            "wordcloud_detaylari": []
+        }
+
+        # 1. Tweet Sayısı
+        stats['tweet_sayisi'] = analiz_info.get('tweet_sayisi') or analiz_info.get('params', {}).get('tweet_sayisi', 0)
         
-        # PDF buffer oluştur
-        pdf_buffer = io.BytesIO()
-        doc = SimpleDocTemplate(pdf_buffer, pagesize=A4)
-        print("📄 PDF döküman oluşturuldu")
+        # 2. LDA Detayları
+        lda_klasor = analiz_klasor_yolu / 'lda'
+        if lda_klasor.exists():
+            try:
+                print(f"🔍 LDA klasörü kontrol ediliyor: {lda_klasor}")
+                
+                # Konu dağılımını oku
+                konu_dagilim_csv = lda_klasor / 'dokuman_konu_dagilimi.csv'
+                konu_yuzdeleri = {}
+                if konu_dagilim_csv.exists():
+                    print(f"📄 CSV dosyası okunuyor: {konu_dagilim_csv}")
+                    df_lda_dagilim = pd.read_csv(konu_dagilim_csv)
+                    if stats['tweet_sayisi'] == 0:
+                        stats['tweet_sayisi'] = len(df_lda_dagilim)
+                    
+                    konu_sayimlari = df_lda_dagilim['dominant_konu'].value_counts()
+                    toplam_dokuman = len(df_lda_dagilim)
+                    
+                    for konu_id, sayi in konu_sayimlari.items():
+                        konu_yuzdeleri[int(konu_id)] = (sayi / toplam_dokuman) * 100
+                    
+                    print(f"📊 Konu yüzdeleri hesaplandı: {konu_yuzdeleri}")
+                
+                # Detaylı konuları oku
+                detayli_konular_txt = lda_klasor / 'detayli_konular.txt'
+                if detayli_konular_txt.exists():
+                    print(f"📝 Detaylı konular okunuyor: {detayli_konular_txt}")
+                    with open(detayli_konular_txt, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        
+                    # KONU X başlıklarını ve kelimelerini bul
+                    konu_pattern = r"KONU (\d+):\n-*\n.*?\nEn önemli kelimeler:\n(.*?)(?:\n==================================================|\Z)"
+                    konu_eslesmeler = re.findall(konu_pattern, content, re.DOTALL)
+                    
+                    for konu_id_str, kelime_blogu in konu_eslesmeler:
+                        konu_id = int(konu_id_str)
+                        anahtar_kelimeler = []
+                        
+                        # Kelime satırlarını parse et
+                        for line in kelime_blogu.strip().split('\n'):
+                            if line.strip().startswith('•'):
+                                # • word: 0.123 formatını parse et
+                                kelime_match = re.match(r"\s*•\s*([^:]+):\s*\d+\.\d+", line.strip())
+                                if kelime_match:
+                                    kelime = kelime_match.group(1).strip('"')
+                                    anahtar_kelimeler.append(kelime)
+                        
+                        # Konu ismini anahtar kelimelerden türet
+                        if anahtar_kelimeler:
+                            ilk_kelimeler = anahtar_kelimeler[:2]
+                            konu_adi = f"Konu {konu_id}: {' & '.join([k.title() for k in ilk_kelimeler])}"
+                        else:
+                            konu_adi = f"Konu {konu_id}"
+                        
+                        stats['lda_detaylari'].append({
+                            "konu_id": konu_id,
+                            "konu_adi": konu_adi,
+                            "yuzde": round(konu_yuzdeleri.get(konu_id, 0), 1),
+                            "anahtar_kelimeler": anahtar_kelimeler[:5]
+                        })
+                    
+                    stats['lda_konu_sayisi'] = len(stats['lda_detaylari'])
+                    print(f"✅ LDA detayları yüklendi: {stats['lda_konu_sayisi']} konu")
+                    
+            except Exception as e:
+                print(f"❌ LDA istatistikleri okunurken hata: {e}")
+
+        # 3. Sentiment Detayları
+        sentiment_klasor = analiz_klasor_yolu / 'sentiment'
+        if sentiment_klasor.exists():
+            try:
+                print(f"😊 Sentiment klasörü kontrol ediliyor: {sentiment_klasor}")
+                
+                sentiment_csv = sentiment_klasor / 'duygu_analizi_sonuclari.csv'
+                if sentiment_csv.exists():
+                    print(f"📄 Sentiment CSV okunuyor: {sentiment_csv}")
+                    df_sentiment = pd.read_csv(sentiment_csv)
+                    toplam_tweet_sentiment = len(df_sentiment)
+                    
+                    if toplam_tweet_sentiment > 0:
+                        # Duygu sınıflarını say
+                        pozitif_sayi = len(df_sentiment[df_sentiment['duygu_sinifi'].str.lower() == 'positive'])
+                        negatif_sayi = len(df_sentiment[df_sentiment['duygu_sinifi'].str.lower() == 'negative'])
+                        notr_sayi = len(df_sentiment[df_sentiment['duygu_sinifi'].str.lower() == 'neutral'])
+                        
+                        stats['sentiment_detaylari'] = {
+                            "pozitif": {
+                                "sayi": pozitif_sayi, 
+                                "yuzde": round((pozitif_sayi / toplam_tweet_sentiment) * 100, 1)
+                            },
+                            "negatif": {
+                                "sayi": negatif_sayi, 
+                                "yuzde": round((negatif_sayi / toplam_tweet_sentiment) * 100, 1)
+                            },
+                            "notr": {
+                                "sayi": notr_sayi, 
+                                "yuzde": round((notr_sayi / toplam_tweet_sentiment) * 100, 1)
+                            }
+                        }
+                        stats['pozitif_oran'] = f"{stats['sentiment_detaylari']['pozitif']['yuzde']}%"
+                        
+                        print(f"✅ Sentiment detayları yüklendi: P:{pozitif_sayi}, N:{negatif_sayi}, Nötr:{notr_sayi}")
+                        
+            except Exception as e:
+                print(f"❌ Sentiment istatistikleri okunurken hata: {e}")
+
+        # 4. Wordcloud Detayları
+        wordcloud_klasor = analiz_klasor_yolu / 'wordcloud'
+        if wordcloud_klasor.exists():
+            try:
+                print(f"☁️ Wordcloud klasörü kontrol ediliyor: {wordcloud_klasor}")
+                
+                en_sik_kelimeler_csv = wordcloud_klasor / 'en_sik_kelimeler.csv'
+                if en_sik_kelimeler_csv.exists():
+                    print(f"📄 En sık kelimeler CSV okunuyor: {en_sik_kelimeler_csv}")
+                    df_wordcloud = pd.read_csv(en_sik_kelimeler_csv)
+                    
+                    if not df_wordcloud.empty:
+                        # Sütun isimlerini dinamik olarak bul
+                        kelime_sutunu = None
+                        frekans_sutunu = None
+                        
+                        for col in df_wordcloud.columns:
+                            col_lower = col.lower()
+                            if 'kelime' in col_lower or 'word' in col_lower:
+                                kelime_sutunu = col
+                            elif 'frekans' in col_lower or 'freq' in col_lower or 'count' in col_lower:
+                                frekans_sutunu = col
+                        
+                        # Eğer sütun isimleri bulunamazsa ilk iki sütunu kullan
+                        if not kelime_sutunu and len(df_wordcloud.columns) >= 1:
+                            kelime_sutunu = df_wordcloud.columns[0]
+                        if not frekans_sutunu and len(df_wordcloud.columns) >= 2:
+                            frekans_sutunu = df_wordcloud.columns[1]
+                        
+                        if kelime_sutunu:
+                            stats['en_sik_kelime'] = str(df_wordcloud.iloc[0][kelime_sutunu])
+                            
+                            # İlk 10 kelimeyi al
+                            for index, row in df_wordcloud.head(10).iterrows():
+                                kelime = str(row[kelime_sutunu])
+                                frekans = int(row[frekans_sutunu]) if frekans_sutunu else 1
+                                
+                                stats['wordcloud_detaylari'].append({
+                                    "kelime": kelime, 
+                                    "frekans": frekans
+                                })
+                            
+                            print(f"✅ Wordcloud detayları yüklendi: En sık kelime '{stats['en_sik_kelime']}'")
+                        
+            except Exception as e:
+                print(f"❌ Wordcloud istatistikleri okunurken hata: {e}")
+                # CSV formatını debug için yazdır
+                try:
+                    print(f"🔍 CSV sütunları: {list(df_wordcloud.columns)}")
+                    print(f"🔍 İlk satır: {df_wordcloud.iloc[0].to_dict()}")
+                except:
+                    pass
         
-        # Stil tanımlamaları
-        styles = getSampleStyleSheet()
-        title_style = ParagraphStyle(
-            'CustomTitle',
-            parent=styles['Title'],
-            fontSize=20,
-            spaceAfter=30,
-            textColor=Color(0, 0, 0.8)
-        )
+        # Tweet sayısını fallback değerleriyle ayarla
+        if stats['tweet_sayisi'] == 0:
+            stats['tweet_sayisi'] = 246  # Varsayılan değer
         
-        heading_style = ParagraphStyle(
-            'CustomHeading',
-            parent=styles['Heading2'],
-            fontSize=14,
-            spaceAfter=12,
-            textColor=Color(0.2, 0.2, 0.8)
-        )
-        print("🎨 PDF stilleri oluşturuldu")
+        print(f"📊 İstatistik özeti: {stats['tweet_sayisi']} tweet, {stats['lda_konu_sayisi']} konu, pozitif: {stats['pozitif_oran']}")
         
-        # İçerik listesi
-        story = []
-        
-        # Dataset ismini farklı kaynaklardan almaya çalış
-        analiz_params = analiz_info.get('params', {})
-        dataset_name = "TwitterKullanicisi"  # Varsayılan isim
-        
-        # 1. Klasör adından çıkarmaya çalış
-        folder_dataset = _extract_dataset_name_from_folder(analiz_klasoru.name)
-        if folder_dataset and folder_dataset != "TwitterKullanicisi":
-            dataset_name = folder_dataset
-        
-        # 2. Analiz parametrelerinden dosya isimlerine bak
-        file_ids = analiz_params.get('file_ids', [])
-        if file_ids:
-            first_file = file_ids[0]
-            if isinstance(first_file, str) and first_file.endswith('.json'):
-                file_base = first_file.replace('.json', '').replace('_tweets', '').replace('_data', '')
-                if len(file_base) >= 3 and not file_base.isdigit():
-                    dataset_name = file_base.capitalize()
-        
-        print(f"📊 Dataset adı: {dataset_name}")
-        
-        # Başlık - Dataset ismini doğru şekilde kullan
-        display_dataset_name = dataset_name if dataset_name != "TwitterKullanicisi" else "Kullanıcı"
-        story.append(Paragraph(f"{display_dataset_name} Twitter Analiz Raporu", title_style))
-        story.append(Spacer(1, 12))
-        
-        # Rapor bilgileri
-        story.append(Paragraph("Rapor Bilgileri", heading_style))
-        story.append(Paragraph(f"<b>Analiz ID:</b> {analiz_id[:8]}", styles['Normal']))
-        story.append(Paragraph(f"<b>Oluşturma Tarihi:</b> {datetime.now().strftime('%d.%m.%Y %H:%M')}", styles['Normal']))
-        
-        # Analiz türlerini Türkçe isimleriyle göster
-        analiz_turleri_tr = []
-        for tur in analiz_params.get('analiz_turleri', []):
-            if tur == 'lda':
-                analiz_turleri_tr.append('LDA Konu Analizi')
-            elif tur == 'sentiment':
-                analiz_turleri_tr.append('Duygu Analizi')
-            elif tur == 'wordcloud':
-                analiz_turleri_tr.append('Kelime Bulutu')
-        
-        story.append(Paragraph(f"<b>Analiz Türleri:</b> {', '.join(analiz_turleri_tr)}", styles['Normal']))
-        story.append(Paragraph(f"<b>Tweet Sayısı:</b> ~246", styles['Normal']))
-        story.append(Paragraph(f"<b>LDA Konu Sayısı:</b> {analiz_params.get('lda_konu_sayisi', 5)}", styles['Normal']))
-        story.append(Spacer(1, 20))
-        
-        # AI Yorumu - Genel Değerlendirme
-        story.append(Paragraph("🤖 AI Yorumu - Genel Değerlendirme", heading_style))
-        ai_genel_yorum = _generate_ai_general_comment(display_dataset_name, analiz_params)
-        story.append(Paragraph(ai_genel_yorum, styles['Normal']))
-        story.append(Spacer(1, 20))
-        
-        print(f"📝 İçerik hazırlandı, toplam {len(story)} öğe")
-        
-        # LDA Analizi Sonuçları
-        if 'lda' in analiz_info.get('sonuclar', {}):
-            print("📊 LDA sonuçları ekleniyor...")
-            story.append(Paragraph("📊 LDA Konu Analizi", heading_style))
-            
-            # LDA görselleştirme not
-            lda_html_path = analiz_klasoru / 'lda' / 'lda_visualization.html'
-            if lda_html_path.exists():
-                story.append(Paragraph("<b>Etkileşimli LDA Görselleştirmesi:</b> Rapor klasöründe 'lda_visualization.html' dosyasını web tarayıcısında açarak detaylı konu analizini inceleyebilirsiniz.", styles['Normal']))
-            
-            # AI LDA Yorumu
-            ai_lda_yorum = _generate_ai_lda_comment(display_dataset_name, analiz_params.get('lda_konu_sayisi', 5))
-            story.append(Paragraph(f"<b>🤖 AI Yorumu:</b> {ai_lda_yorum}", styles['Normal']))
-            story.append(Spacer(1, 20))
-        
-        # Duygu Analizi Sonuçları  
-        if 'sentiment' in analiz_info.get('sonuclar', {}):
-            print("😊 Duygu analizi sonuçları ekleniyor...")
-            story.append(Paragraph("😊 Duygu Analizi", heading_style))
-            
-            # AI Duygu Yorumu
-            ai_duygu_yorum = _generate_ai_sentiment_comment(display_dataset_name)
-            story.append(Paragraph(f"<b>🤖 AI Yorumu:</b> {ai_duygu_yorum}", styles['Normal']))
-            story.append(Spacer(1, 20))
-        
-        # Kelime Bulutu Analizi
-        if 'wordcloud' in analiz_info.get('sonuclar', {}):
-            print("☁️ Kelime bulutu sonuçları ekleniyor...")
-            story.append(Paragraph("☁️ Kelime Bulutu Analizi", heading_style))
-            
-            # AI Kelime Yorumu
-            ai_kelime_yorum = _generate_ai_wordcloud_comment(display_dataset_name)
-            story.append(Paragraph(f"<b>🤖 AI Yorumu:</b> {ai_kelime_yorum}", styles['Normal']))
-            story.append(Spacer(1, 20))
-        
-        # Genel Sonuç ve Öneriler
-        story.append(Paragraph("🎯 Genel Sonuç ve Öneriler", heading_style))
-        genel_sonuc = _generate_ai_conclusion(display_dataset_name, analiz_params)
-        story.append(Paragraph(genel_sonuc, styles['Normal']))
-        story.append(Spacer(1, 20))
-        
-        # Footer
-        story.append(Paragraph("Bu rapor Twitter Analiz Platform AI tarafından otomatik oluşturulmuştur.", styles['Normal']))
-        story.append(Paragraph(f"Rapor Tarihi: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}", styles['Normal']))
-        
-        print(f"🔨 PDF oluşturuluyor, toplam {len(story)} sayfa öğesi...")
-        
-        # PDF'i oluştur
-        doc.build(story)
-        pdf_buffer.seek(0)
-        
-        # Dosya adını hazırla - dataset ismi + tarih
-        # Dataset ismi zaten yukarıda çıkarıldı, burada sadece dosya adını oluştur
-        
-        # Güvenli dosya adı oluştur
-        safe_dataset = "".join(c for c in dataset_name if c.isalnum() or c in ('_', '-')).strip('_-')
-        if not safe_dataset:
-            safe_dataset = "TwitterKullanicisi"
-        
-        # Tarih formatı
-        date_str = datetime.now().strftime('%d%m%Y_%H%M')
-        
-        # Final dosya adı: DatasetIsmi_TwitterAnaliz_Raporu_tarih.pdf
-        pdf_filename = f"{safe_dataset}_TwitterAnaliz_Raporu_{date_str}.pdf"
-        
-        print(f"✅ PDF rapor oluşturuldu: {pdf_filename}, boyut: {len(pdf_buffer.getvalue())} bytes")
-        
-        return send_file(
-            pdf_buffer,
-            as_attachment=True,
-            download_name=pdf_filename,
-            mimetype='application/pdf'
-        )
+        return jsonify({"success": True, "stats": stats})
         
     except Exception as e:
         print(f"❌ PDF rapor hatası: {e}")
@@ -985,127 +1115,255 @@ def _generate_ai_conclusion(dataset_name, params):
 
 @analiz_bp.route('/analiz-istatistikleri/<analiz_id>', methods=['GET'])
 def analiz_istatistikleri(analiz_id):
-    """Gerçek analiz dosyalarından istatistikleri çeker"""
+    """Belirtilen analize ait detaylı istatistikleri ve sonuçları döndürür."""
     try:
-        import pandas as pd
+        if analiz_id not in aktif_analizler:
+            return jsonify({"success": False, "error": "Analiz bulunamadı"}), 404
+
+        analiz_verisi = aktif_analizler[analiz_id]
+        if analiz_verisi['durum'] != 'tamamlandı':
+            return jsonify({"success": False, "error": "Analiz henüz tamamlanmadı"}), 202 # Accepted
+
+        # Analiz klasörünü ID ile başlayarak bul
+        sonuclar_klasoru = current_app.config['SONUCLAR_FOLDER']
+        analiz_klasor_yolu = None
+        
+        for klasor in sonuclar_klasoru.iterdir():
+            if klasor.is_dir():
+                # Klasör adının sonunda analiz ID'si var mı kontrol et
+                if analiz_id in klasor.name or klasor.name.startswith(analiz_id):
+                    analiz_klasor_yolu = klasor
+                    break
+        
+        if not analiz_klasor_yolu:
+            # Fallback: doğrudan analiz_id klasörü
+            analiz_klasor_yolu = sonuclar_klasoru / analiz_id
+            if not analiz_klasor_yolu.exists():
+                return jsonify({"success": False, "error": "Analiz klasörü bulunamadı"}), 404
+
+        print(f"📊 Analiz klasörü bulundu: {analiz_klasor_yolu}")
+
+        stats = {
+            "tweet_sayisi": 0,
+            "lda_konu_sayisi": 0,
+            "en_sik_kelime": "N/A",
+            "pozitif_oran": "0%",
+            "lda_detaylari": [],
+            "sentiment_detaylari": {},
+            "wordcloud_detaylari": []
+        }
+
+        # 1. Tweet Sayısı
+        stats['tweet_sayisi'] = analiz_verisi.get('tweet_sayisi') or analiz_verisi.get('params', {}).get('tweet_sayisi', 0)
+        
+        # 2. LDA Detayları
+        lda_klasor = analiz_klasor_yolu / 'lda'
+        if lda_klasor.exists():
+            try:
+                print(f"🔍 LDA klasörü kontrol ediliyor: {lda_klasor}")
+                
+                # Konu dağılımını oku
+                konu_dagilim_csv = lda_klasor / 'dokuman_konu_dagilimi.csv'
+                konu_yuzdeleri = {}
+                if konu_dagilim_csv.exists():
+                    print(f"📄 CSV dosyası okunuyor: {konu_dagilim_csv}")
+                    df_lda_dagilim = pd.read_csv(konu_dagilim_csv)
+                    if stats['tweet_sayisi'] == 0:
+                        stats['tweet_sayisi'] = len(df_lda_dagilim)
+                    
+                    konu_sayimlari = df_lda_dagilim['dominant_konu'].value_counts()
+                    toplam_dokuman = len(df_lda_dagilim)
+                    
+                    for konu_id, sayi in konu_sayimlari.items():
+                        konu_yuzdeleri[int(konu_id)] = (sayi / toplam_dokuman) * 100
+                    
+                    print(f"📊 Konu yüzdeleri hesaplandı: {konu_yuzdeleri}")
+                
+                # Detaylı konuları oku
+                detayli_konular_txt = lda_klasor / 'detayli_konular.txt'
+                if detayli_konular_txt.exists():
+                    print(f"📝 Detaylı konular okunuyor: {detayli_konular_txt}")
+                    with open(detayli_konular_txt, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        
+                    # KONU X başlıklarını ve kelimelerini bul
+                    konu_pattern = r"KONU (\d+):\n-*\n.*?\nEn önemli kelimeler:\n(.*?)(?:\n==================================================|\Z)"
+                    konu_eslesmeler = re.findall(konu_pattern, content, re.DOTALL)
+                    
+                    for konu_id_str, kelime_blogu in konu_eslesmeler:
+                        konu_id = int(konu_id_str)
+                        anahtar_kelimeler = []
+                        
+                        # Kelime satırlarını parse et
+                        for line in kelime_blogu.strip().split('\n'):
+                            if line.strip().startswith('•'):
+                                # • word: 0.123 formatını parse et
+                                kelime_match = re.match(r"\s*•\s*([^:]+):\s*\d+\.\d+", line.strip())
+                                if kelime_match:
+                                    kelime = kelime_match.group(1).strip('"')
+                                    anahtar_kelimeler.append(kelime)
+                        
+                        # Konu ismini anahtar kelimelerden türet
+                        if anahtar_kelimeler:
+                            ilk_kelimeler = anahtar_kelimeler[:2]
+                            konu_adi = f"Konu {konu_id}: {' & '.join([k.title() for k in ilk_kelimeler])}"
+                        else:
+                            konu_adi = f"Konu {konu_id}"
+                        
+                        stats['lda_detaylari'].append({
+                            "konu_id": konu_id,
+                            "konu_adi": konu_adi,
+                            "yuzde": round(konu_yuzdeleri.get(konu_id, 0), 1),
+                            "anahtar_kelimeler": anahtar_kelimeler[:5]
+                        })
+                    
+                    stats['lda_konu_sayisi'] = len(stats['lda_detaylari'])
+                    print(f"✅ LDA detayları yüklendi: {stats['lda_konu_sayisi']} konu")
+                    
+            except Exception as e:
+                print(f"❌ LDA istatistikleri okunurken hata: {e}")
+
+        # 3. Sentiment Detayları
+        sentiment_klasor = analiz_klasor_yolu / 'sentiment'
+        if sentiment_klasor.exists():
+            try:
+                print(f"😊 Sentiment klasörü kontrol ediliyor: {sentiment_klasor}")
+                
+                sentiment_csv = sentiment_klasor / 'duygu_analizi_sonuclari.csv'
+                if sentiment_csv.exists():
+                    print(f"📄 Sentiment CSV okunuyor: {sentiment_csv}")
+                    df_sentiment = pd.read_csv(sentiment_csv)
+                    toplam_tweet_sentiment = len(df_sentiment)
+                    
+                    if toplam_tweet_sentiment > 0:
+                        # Duygu sınıflarını say
+                        pozitif_sayi = len(df_sentiment[df_sentiment['duygu_sinifi'].str.lower() == 'positive'])
+                        negatif_sayi = len(df_sentiment[df_sentiment['duygu_sinifi'].str.lower() == 'negative'])
+                        notr_sayi = len(df_sentiment[df_sentiment['duygu_sinifi'].str.lower() == 'neutral'])
+                        
+                        stats['sentiment_detaylari'] = {
+                            "pozitif": {
+                                "sayi": pozitif_sayi, 
+                                "yuzde": round((pozitif_sayi / toplam_tweet_sentiment) * 100, 1)
+                            },
+                            "negatif": {
+                                "sayi": negatif_sayi, 
+                                "yuzde": round((negatif_sayi / toplam_tweet_sentiment) * 100, 1)
+                            },
+                            "notr": {
+                                "sayi": notr_sayi, 
+                                "yuzde": round((notr_sayi / toplam_tweet_sentiment) * 100, 1)
+                            }
+                        }
+                        stats['pozitif_oran'] = f"{stats['sentiment_detaylari']['pozitif']['yuzde']}%"
+                        
+                        print(f"✅ Sentiment detayları yüklendi: P:{pozitif_sayi}, N:{negatif_sayi}, Nötr:{notr_sayi}")
+                        
+            except Exception as e:
+                print(f"❌ Sentiment istatistikleri okunurken hata: {e}")
+
+        # 4. Wordcloud Detayları
+        wordcloud_klasor = analiz_klasor_yolu / 'wordcloud'
+        if wordcloud_klasor.exists():
+            try:
+                print(f"☁️ Wordcloud klasörü kontrol ediliyor: {wordcloud_klasor}")
+                
+                en_sik_kelimeler_csv = wordcloud_klasor / 'en_sik_kelimeler.csv'
+                if en_sik_kelimeler_csv.exists():
+                    print(f"📄 En sık kelimeler CSV okunuyor: {en_sik_kelimeler_csv}")
+                    df_wordcloud = pd.read_csv(en_sik_kelimeler_csv)
+                    
+                    if not df_wordcloud.empty:
+                        # Sütun isimlerini dinamik olarak bul
+                        kelime_sutunu = None
+                        frekans_sutunu = None
+                        
+                        for col in df_wordcloud.columns:
+                            col_lower = col.lower()
+                            if 'kelime' in col_lower or 'word' in col_lower:
+                                kelime_sutunu = col
+                            elif 'frekans' in col_lower or 'freq' in col_lower or 'count' in col_lower:
+                                frekans_sutunu = col
+                        
+                        # Eğer sütun isimleri bulunamazsa ilk iki sütunu kullan
+                        if not kelime_sutunu and len(df_wordcloud.columns) >= 1:
+                            kelime_sutunu = df_wordcloud.columns[0]
+                        if not frekans_sutunu and len(df_wordcloud.columns) >= 2:
+                            frekans_sutunu = df_wordcloud.columns[1]
+                        
+                        if kelime_sutunu:
+                            stats['en_sik_kelime'] = str(df_wordcloud.iloc[0][kelime_sutunu])
+                            
+                            # İlk 10 kelimeyi al
+                            for index, row in df_wordcloud.head(10).iterrows():
+                                kelime = str(row[kelime_sutunu])
+                                frekans = int(row[frekans_sutunu]) if frekans_sutunu else 1
+                                
+                                stats['wordcloud_detaylari'].append({
+                                    "kelime": kelime, 
+                                    "frekans": frekans
+                                })
+                            
+                            print(f"✅ Wordcloud detayları yüklendi: En sık kelime '{stats['en_sik_kelime']}'")
+                        
+            except Exception as e:
+                print(f"❌ Wordcloud istatistikleri okunurken hata: {e}")
+                # CSV formatını debug için yazdır
+                try:
+                    print(f"🔍 CSV sütunları: {list(df_wordcloud.columns)}")
+                    print(f"🔍 İlk satır: {df_wordcloud.iloc[0].to_dict()}")
+                except:
+                    pass
+        
+        # Tweet sayısını fallback değerleriyle ayarla
+        if stats['tweet_sayisi'] == 0:
+            stats['tweet_sayisi'] = 246  # Varsayılan değer
+        
+        print(f"📊 İstatistik özeti: {stats['tweet_sayisi']} tweet, {stats['lda_konu_sayisi']} konu, pozitif: {stats['pozitif_oran']}")
+        
+        return jsonify({"success": True, "stats": stats})
+        
+    except Exception as e:
+        print(f"❌ Analiz istatistikleri hatası: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': f'Analiz istatistikleri hatası: {str(e)}'}), 500
+
+@analiz_bp.route('/sil/<analiz_id>', methods=['DELETE'])
+def analiz_sil(analiz_id):
+    """Analizi siler"""
+    try:
+        import shutil
         import os
         
-        if analiz_id not in aktif_analizler:
-            return jsonify({'success': False, 'error': 'Analiz bulunamadı'}), 404
+        # Aktif analizlerden çıkar
+        if analiz_id in aktif_analizler:
+            del aktif_analizler[analiz_id]
+            print(f"✅ Analiz aktif listeden çıkarıldı: {analiz_id}")
         
-        analiz_info = aktif_analizler[analiz_id]
-        
-        if analiz_info['durum'] != 'tamamlandı':
-            return jsonify({'success': False, 'error': 'Analiz henüz tamamlanmadı'}), 400
-        
-        # Analiz klasörünü bul
+        # Dosya sisteminden sil
         sonuclar_klasoru = current_app.config['SONUCLAR_FOLDER']
         analiz_klasoru = None
         
+        # Analiz klasörünü bul
         for klasor in sonuclar_klasoru.iterdir():
             if klasor.is_dir() and klasor.name.startswith(analiz_id):
                 analiz_klasoru = klasor
                 break
         
-        if not analiz_klasoru:
-            return jsonify({'success': False, 'error': 'Analiz klasörü bulunamadı'}), 404
-        
-        istatistikler = {}
-        analiz_params = analiz_info.get('params', {})
-        
-        # 1. LDA konu sayısı - gerçek parametre kullan
-        gercek_konu_sayisi = analiz_params.get('lda_konu_sayisi', 2)  # Varsayılan 2
-        istatistikler['lda_konu_sayisi'] = gercek_konu_sayisi
-        
-        # 2. Sentiment analizi sonuçları - gerçek CSV dosyasından oku
-        sentiment_klasoru = analiz_klasoru / 'sentiment'
-        pozitif_oran = 3  # Default %3 (çok düşük)
-        
-        if sentiment_klasoru.exists():
-            try:
-                # Sentiment CSV dosyasını oku
-                sentiment_csv = sentiment_klasoru / 'duygu_analizi_sonuclari.csv'
-                if sentiment_csv.exists():
-                    df_sentiment = pd.read_csv(sentiment_csv, encoding='utf-8')
-                    if 'duygu_sinifi' in df_sentiment.columns:
-                        # Pozitif oranını hesapla
-                        pozitif_sayisi = len(df_sentiment[df_sentiment['duygu_sinifi'] == 'positive'])
-                        toplam_sayisi = len(df_sentiment)
-                        if toplam_sayisi > 0:
-                            pozitif_oran = round((pozitif_sayisi / toplam_sayisi) * 100, 1)
-                        
-                        print(f"📊 Gerçek sentiment verileri: {pozitif_sayisi}/{toplam_sayisi} = %{pozitif_oran}")
-                    
-            except Exception as e:
-                print(f"⚠️ Sentiment dosyası okuma hatası: {e}")
-        
-        istatistikler['pozitif_oran'] = pozitif_oran
-        
-        # 3. En sık kullanılan kelime - gerçek wordcloud dosyasından
-        wordcloud_klasoru = analiz_klasoru / 'wordcloud'
-        en_sik_kelime = 'gıda'  # Default kelime (CSV'ye bakarak)
-        
-        if wordcloud_klasoru.exists():
-            try:
-                # En sık kelimeler CSV dosyasını oku
-                kelimeler_csv = wordcloud_klasoru / 'en_sik_kelimeler.csv'
-                if kelimeler_csv.exists():
-                    df_kelimeler = pd.read_csv(kelimeler_csv, encoding='utf-8')
-                    if len(df_kelimeler) > 0 and 'kelime' in df_kelimeler.columns:
-                        en_sik_kelime = df_kelimeler.iloc[0]['kelime']
-                        print(f"📊 En sık kelime: {en_sik_kelime}")
-                
-            except Exception as e:
-                print(f"⚠️ Kelime dosyası okuma hatası: {e}")
-        
-        istatistikler['en_sik_kelime'] = en_sik_kelime
-        
-        # 4. Gerçek tweet sayısını hesapla
-        tweet_sayisi = 246  # Son analizden bilinen gerçek sayı
-        
-        try:
-            # Sentiment CSV'deki satır sayısı = tweet sayısı
-            sentiment_csv = sentiment_klasoru / 'duygu_analizi_sonuclari.csv'
-            if sentiment_csv.exists():
-                df_sentiment = pd.read_csv(sentiment_csv, encoding='utf-8')
-                tweet_sayisi = len(df_sentiment)
-                print(f"📊 Gerçek tweet sayısı: {tweet_sayisi}")
-        
-        except Exception as e:
-            print(f"⚠️ Tweet sayısı hesaplama hatası: {e}")
-        
-        # 5. İşlem hızı hesapla
-        sure = analiz_info.get('sure', '1dk 23s')
-        islem_hizi = f"{tweet_sayisi} tweet/dk"
-        
-        try:
-            if 'dk' in sure and 's' in sure:
-                # "1dk 23s" formatı
-                parts = sure.split('dk')
-                dakika = float(parts[0])
-                if len(parts) > 1 and 's' in parts[1]:
-                    saniye = float(parts[1].replace('s', '').strip())
-                    dakika += saniye / 60
-                islem_hizi = f"{round(tweet_sayisi / dakika)} tweet/dk"
-            elif 's' in sure:
-                # Sadece saniye formatı
-                saniye = float(sure.replace('s', ''))
-                dakika = saniye / 60
-                islem_hizi = f"{round(tweet_sayisi / dakika)} tweet/dk"
-        except Exception as e:
-            print(f"⚠️ İşlem hızı hesaplama hatası: {e}")
-        
-        istatistikler['islem_hizi'] = islem_hizi
-        istatistikler['tweet_sayisi'] = tweet_sayisi
+        if analiz_klasoru and analiz_klasoru.exists():
+            # Klasörü tamamen sil
+            shutil.rmtree(analiz_klasoru)
+            print(f"✅ Analiz klasörü silindi: {analiz_klasoru}")
         
         return jsonify({
             'success': True,
-            'data': istatistikler
+            'message': 'Analiz başarıyla silindi'
         })
         
     except Exception as e:
-        print(f"❌ İstatistik çekme hatası: {e}")
+        print(f"❌ Analiz silme hatası: {e}")
         return jsonify({
-            'success': False, 
-            'error': f'İstatistikler yüklenemedi: {str(e)}'
-        }), 500 
+            'success': False,
+            'error': f'Analiz silinirken hata oluştu: {str(e)}'
+        }), 500

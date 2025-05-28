@@ -1,0 +1,23 @@
+KELIME İSTATİSTİKLERİ
+==================================================
+
+Toplam metin sayısı: 40
+Toplam benzersiz kelime: 13
+Toplam kelime kullanımı: 27
+Ortalama kelime uzunluğu: 5.8
+
+EN SIK KULLANILAN 50 KELİME:
+------------------------------
+ 1. the            :    3 kez
+ 2. nato           :    2 kez
+ 3. türkiye       :    2 kez
+ 4. hür           :    2 kez
+ 5. ahmet          :    2 kez
+ 6. güçlü       :    2 kez
+ 7. yavaş         :    2 kez
+ 8. chp            :    2 kez
+ 9. genel          :    2 kez
+10. başkanı       :    2 kez
+11. özele         :    2 kez
+12. kıbrıs         :    2 kez
+13. mitingini      :    2 kez

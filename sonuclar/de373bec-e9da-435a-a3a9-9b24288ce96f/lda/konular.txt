@@ -1,2 +1,0 @@
-Konu 0: 0.069*"çok" + 0.032*"Yeni" + 0.032*"bir" + 0.023*"ve" + 0.023*"gerçekten" + 0.014*"Bugün" + 0.014*"mutlu" + 0.014*"etkileyici" + 0.014*"gelişmeler" + 0.014*"Yapay"
-Konu 1: 0.051*"Bu" + 0.042*"çok" + 0.033*"ve" + 0.023*"etti" + 0.014*"mutlu" + 0.014*"kaliteli" + 0.014*"memnun" + 0.014*"yemekler" + 0.014*"hayat" + 0.014*"artırdı"

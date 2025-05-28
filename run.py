@@ -67,9 +67,6 @@ def check_directory_structure():
     required_dirs = [
         'tweet_arsivleri',
         'sonuclar',
-        'sonuclar/lda_sonuclari',
-        'sonuclar/duygu_sonuclari', 
-        'sonuclar/wordcloud_sonuclari',
         'uploads',
         'static/css',
         'static/js',

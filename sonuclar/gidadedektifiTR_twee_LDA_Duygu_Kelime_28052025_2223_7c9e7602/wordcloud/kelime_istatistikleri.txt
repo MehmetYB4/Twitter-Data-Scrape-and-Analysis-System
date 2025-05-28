@@ -1,0 +1,60 @@
+KELIME İSTATİSTİKLERİ
+==================================================
+
+Toplam metin sayısı: 114
+Toplam benzersiz kelime: 105
+Toplam kelime kullanımı: 421
+Ortalama kelime uzunluğu: 6.2
+
+EN SIK KULLANILAN 50 KELİME:
+------------------------------
+ 1. şeker         :   18 kez
+ 2. oranında       :   12 kez
+ 3. süt           :   11 kez
+ 4. aroma          :   10 kez
+ 5. takip          :   10 kez
+ 6. cappy          :   10 kez
+ 7. yağı          :    8 kez
+ 8. nohut          :    8 kez
+ 9. tarafından     :    8 kez
+10. ürün         :    8 kez
+11. a101           :    8 kez
+12. çilek         :    8 kez
+13. yerli          :    6 kez
+14. çay           :    6 kez
+15. vericisi       :    6 kez
+16. yeni           :    6 kez
+17. tamek          :    6 kez
+18. gıda           :    6 kez
+19. bergamot       :    6 kez
+20. karadeniz      :    6 kez
+21. yapay          :    6 kez
+22. tarihi         :    6 kez
+23. kuru           :    6 kez
+24. limon          :    4 kez
+25. tereyağ       :    4 kez
+26. ayrıca         :    4 kez
+27. çayın         :    4 kez
+28. ithal          :    4 kez
+29. domuz          :    4 kez
+30. eti            :    4 kez
+31. tespiti        :    4 kez
+32. ege            :    4 kez
+33. baharatlı      :    4 kez
+34. ton            :    4 kez
+35. kaşar         :    4 kez
+36. tanker         :    4 kez
+37. margarin       :    4 kez
+38. fiyatı         :    4 kez
+39. sarımsağın    :    4 kez
+40. avlanan        :    4 kez
+41. tespit         :    4 kez
+42. restoranın     :    4 kez
+43. pastörize     :    4 kez
+44. gum            :    4 kez
+45. ayranlar       :    4 kez
+46. hindi          :    4 kez
+47. protein        :    4 kez
+48. tüketim       :    4 kez
+49. yaklaşan      :    4 kez
+50. kahve          :    4 kez
