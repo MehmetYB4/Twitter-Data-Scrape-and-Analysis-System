@@ -1,0 +1,572 @@
+{% extends "base.html" %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Analiz Sonuçları</li>
+{% endblock %}
+
+{% block subtitle %}
+<p class="text-muted mb-0">Tamamlanan analizlerin sonuçlarını görüntüleyin ve indirin</p>
+{% endblock %}
+
+{% block content %}
+<!-- Filters and Search -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-4">
+                        <label for="filterStatus" class="form-label">Durum</label>
+                        <select class="form-select" id="filterStatus">
+                            <option value="">Tümü</option>
+                            <option value="tamamlandı">Tamamlandı</option>
+                            <option value="çalışıyor">Çalışıyor</option>
+                            <option value="hata">Hata</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="filterType" class="form-label">Analiz Türü</label>
+                        <select class="form-select" id="filterType">
+                            <option value="">Tümü</option>
+                            <option value="lda">LDA</option>
+                            <option value="sentiment">Duygu Analizi</option>
+                            <option value="wordcloud">Kelime Bulutu</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="searchQuery" class="form-label">Arama</label>
+                        <input type="text" class="form-control" id="searchQuery" placeholder="Analiz adı veya dosya adı...">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <small class="text-muted">Toplam Analiz</small>
+                        <div class="h5 mb-0" id="totalAnalyses">-</div>
+                    </div>
+                    <div>
+                        <small class="text-muted">Tamamlanan</small>
+                        <div class="h5 mb-0 text-success" id="completedAnalyses">-</div>
+                    </div>
+                    <div>
+                        <small class="text-muted">Çalışan</small>
+                        <div class="h5 mb-0 text-info" id="runningAnalyses">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Results Grid -->
+<div class="row" id="resultsContainer">
+    <!-- Loading State -->
+    <div class="col-12">
+        <div class="text-center py-5" id="loadingState">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Yükleniyor...</span>
+            </div>
+            <h5>Analiz sonuçları yükleniyor...</h5>
+        </div>
+    </div>
+    
+    <!-- Empty State -->
+    <div class="col-12" id="emptyState" style="display: none;">
+        <div class="text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <h3 class="mt-3 text-muted">Henüz analiz sonucu yok</h3>
+            <p class="text-muted mb-4">İlk analizinizi başlatmak için veri seçimi sayfasına gidin</p>
+            <a href="{{ url_for('main.veri_secimi') }}" class="btn btn-primary">
+                <i class="bi bi-play-fill"></i> Analiz Başlat
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Results Grid Template (will be populated by JavaScript) -->
+<template id="resultCardTemplate">
+    <div class="col-lg-6 col-xl-4 mb-4 result-card" data-status="" data-type="">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 result-title">Analiz Adı</h6>
+                <span class="badge result-status-badge">Durum</span>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted">Analiz Türleri:</small>
+                    <div class="result-types mt-1">
+                        <!-- Analysis type badges will be inserted here -->
+                    </div>
+                </div>
+                
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <small class="text-muted">Başlangıç:</small>
+                        <div class="small fw-medium result-start-date">-</div>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">Süre:</small>
+                        <div class="small fw-medium result-duration">-</div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <small class="text-muted">Tweet Sayısı:</small>
+                    <div class="fw-bold result-tweet-count">-</div>
+                </div>
+                
+                <!-- Progress bar for running analyses -->
+                <div class="progress-container" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-muted">İlerleme:</small>
+                        <small class="progress-text">0%</small>
+                    </div>
+                    <div class="progress mb-3" style="height: 8px;">
+                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0">
+                <div class="d-grid gap-2">
+                    <div class="btn-group result-actions">
+                        <button class="btn btn-primary btn-sm view-results" disabled>
+                            <i class="bi bi-eye"></i> Sonuçları Görüntüle
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle dropdown-toggle-split" 
+                                data-bs-toggle="dropdown" disabled>
+                            <span class="visually-hidden">Toggle Dropdown</span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item download-results" href="#">
+                                <i class="bi bi-download"></i> İndir
+                            </a></li>
+                            <li><a class="dropdown-item share-results" href="#">
+                                <i class="bi bi-share"></i> Paylaş
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger delete-results" href="#">
+                                <i class="bi bi-trash"></i> Sil
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- Analysis Detail Modal -->
+<div class="modal fade" id="analysisDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-graph-up"></i> Analiz Detayları
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="analysisDetailContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Yükleniyor...</span>
+                        </div>
+                        <p class="mt-2">Analiz detayları yükleniyor...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                <button type="button" class="btn btn-primary" id="openFullResults">
+                    <i class="bi bi-arrows-fullscreen"></i> Tam Ekran Görüntüle
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allResults = [];
+let filteredResults = [];
+let refreshInterval;
+
+// Yardımcı fonksiyonlar
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleString('tr-TR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function formatNumber(number) {
+    return number.toLocaleString('tr-TR');
+}
+
+function showAlert(type, message, duration = 5000) {
+    const alertContainer = document.getElementById('alertContainer');
+    if (!alertContainer) {
+        console.error('Alert container bulunamadı!');
+        alert(message);
+        return;
+    }
+    
+    const alertId = 'alert-' + Date.now();
+    const icons = {
+        'success': 'check-circle',
+        'danger': 'exclamation-triangle',
+        'warning': 'exclamation-triangle',
+        'info': 'info-circle'
+    };
+    
+    const alertHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert" id="${alertId}">
+            <i class="bi bi-${icons[type] || 'info-circle'}"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+    
+    alertContainer.insertAdjacentHTML('beforeend', alertHTML);
+    
+    if (duration > 0) {
+        setTimeout(() => {
+            const alertElement = document.getElementById(alertId);
+            if (alertElement) {
+                alertElement.remove();
+            }
+        }, duration);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Load results
+    loadResults();
+    
+    // Setup filters
+    setupFilters();
+    
+    // Auto-refresh for running analyses
+    refreshInterval = setInterval(loadResults, 10000);
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', function() {
+        if (refreshInterval) {
+            clearInterval(refreshInterval);
+        }
+    });
+});
+
+function loadResults() {
+    console.log('📊 Analiz sonuçları yükleniyor...');
+    
+    // Gerçek API'den analiz listesini çek
+    fetch('/analiz/liste')
+        .then(response => {
+            console.log('📡 API Response Status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('📦 API Response Data:', data);
+            if (data.success) {
+                allResults = data.data.map(analiz => ({
+                    id: analiz.id,
+                    name: analiz.name,
+                    status: mapStatusToTurkish(analiz.status),
+                    types: analiz.types || [],
+                    startDate: analiz.startDate,
+                    endDate: analiz.endDate,
+                    tweetCount: analiz.tweetCount || 0,
+                    progress: analiz.progress || 0,
+                    error: analiz.error,
+                    fileCount: analiz.fileCount || 1
+                }));
+                
+                console.log('✅ Yüklenen analiz sayısı:', allResults.length);
+                applyFilters();
+                updateStatistics();
+            } else {
+                console.error('❌ API Error:', data.error);
+                showAlert('danger', 'Analiz sonuçları yüklenirken hata oluştu: ' + data.error);
+                
+                // Hata durumunda boş liste göster
+                allResults = [];
+                applyFilters();
+                updateStatistics();
+            }
+        })
+        .catch(error => {
+            console.error('💥 Analiz sonuçları yüklenirken hata:', error);
+            showAlert('danger', 'Analiz sonuçları yüklenirken hata oluştu: ' + error.message);
+            
+            // Hata durumunda boş liste göster
+            allResults = [];
+            applyFilters();
+            updateStatistics();
+        });
+}
+
+// Durum isimlerini Türkçe'ye çevir
+function mapStatusToTurkish(status) {
+    const statusMap = {
+        'tamamlandı': 'tamamlandı',
+        'completed': 'tamamlandı',
+        'çalışıyor': 'çalışıyor',
+        'running': 'çalışıyor',
+        'beklemede': 'beklemede',
+        'pending': 'beklemede',
+        'hata': 'hata',
+        'error': 'hata',
+        'failed': 'hata'
+    };
+    return statusMap[status] || status;
+}
+
+function setupFilters() {
+    const filterStatus = document.getElementById('filterStatus');
+    const filterType = document.getElementById('filterType');
+    const searchQuery = document.getElementById('searchQuery');
+    
+    filterStatus.addEventListener('change', applyFilters);
+    filterType.addEventListener('change', applyFilters);
+    searchQuery.addEventListener('input', debounce(applyFilters, 300));
+}
+
+function applyFilters() {
+    const statusFilter = document.getElementById('filterStatus').value;
+    const typeFilter = document.getElementById('filterType').value;
+    const searchFilter = document.getElementById('searchQuery').value.toLowerCase();
+    
+    filteredResults = allResults.filter(result => {
+        // Status filter
+        if (statusFilter && result.status !== statusFilter) return false;
+        
+        // Type filter
+        if (typeFilter && !result.types.includes(typeFilter)) return false;
+        
+        // Search filter
+        if (searchFilter && !result.name.toLowerCase().includes(searchFilter)) return false;
+        
+        return true;
+    });
+    
+    displayResults();
+}
+
+function displayResults() {
+    const container = document.getElementById('resultsContainer');
+    const loadingState = document.getElementById('loadingState');
+    const emptyState = document.getElementById('emptyState');
+    
+    // Hide loading state
+    loadingState.style.display = 'none';
+    
+    if (filteredResults.length === 0) {
+        emptyState.style.display = 'block';
+        // Clear any existing cards
+        const existingCards = container.querySelectorAll('.result-card');
+        existingCards.forEach(card => card.remove());
+        return;
+    }
+    
+    emptyState.style.display = 'none';
+    
+    // Clear existing cards
+    const existingCards = container.querySelectorAll('.result-card');
+    existingCards.forEach(card => card.remove());
+    
+    // Create cards for each result
+    filteredResults.forEach(result => {
+        const card = createResultCard(result);
+        container.appendChild(card);
+    });
+}
+
+function createResultCard(result) {
+    const template = document.getElementById('resultCardTemplate');
+    const card = template.content.cloneNode(true);
+    const cardElement = card.querySelector('.result-card');
+    
+    // Set data attributes
+    cardElement.setAttribute('data-status', result.status);
+    cardElement.setAttribute('data-type', result.types.join(','));
+    cardElement.setAttribute('data-id', result.id);
+    
+    // Set title
+    card.querySelector('.result-title').textContent = result.name;
+    
+    // Set status badge
+    const statusBadge = card.querySelector('.result-status-badge');
+    statusBadge.textContent = getStatusText(result.status);
+    statusBadge.className = `badge ${getStatusBadgeClass(result.status)}`;
+    
+    // Set analysis types
+    const typesContainer = card.querySelector('.result-types');
+    result.types.forEach(type => {
+        const badge = document.createElement('span');
+        badge.className = `badge ${getTypeBadgeClass(type)} me-1`;
+        badge.textContent = getTypeText(type);
+        typesContainer.appendChild(badge);
+    });
+    
+    // Set dates and duration
+    card.querySelector('.result-start-date').textContent = formatDate(result.startDate);
+    if (result.endDate) {
+        const duration = calculateDuration(result.startDate, result.endDate);
+        card.querySelector('.result-duration').textContent = duration;
+    } else {
+        card.querySelector('.result-duration').textContent = 'Devam ediyor';
+    }
+    
+    // Set tweet count
+    card.querySelector('.result-tweet-count').textContent = formatNumber(result.tweetCount);
+    
+    // Handle progress for running analyses
+    if (result.status === 'çalışıyor') {
+        const progressContainer = card.querySelector('.progress-container');
+        const progressBar = card.querySelector('.progress-bar');
+        const progressText = card.querySelector('.progress-text');
+        
+        progressContainer.style.display = 'block';
+        progressBar.style.width = result.progress + '%';
+        progressText.textContent = result.progress + '%';
+        
+        // Add animation to progress bar
+        progressBar.classList.add('progress-bar-animated', 'progress-bar-striped');
+    }
+    
+    // Setup action buttons
+    const viewButton = card.querySelector('.view-results');
+    const dropdownToggle = card.querySelector('.dropdown-toggle-split');
+    
+    if (result.status === 'tamamlandı') {
+        viewButton.disabled = false;
+        dropdownToggle.disabled = false;
+        
+        viewButton.addEventListener('click', () => viewResults(result.id));
+        
+        // Setup dropdown actions
+        card.querySelector('.download-results').addEventListener('click', (e) => {
+            e.preventDefault();
+            downloadResults(result.id);
+        });
+        
+        card.querySelector('.share-results').addEventListener('click', (e) => {
+            e.preventDefault();
+            shareResults(result.id);
+        });
+        
+        card.querySelector('.delete-results').addEventListener('click', (e) => {
+            e.preventDefault();
+            deleteResults(result.id);
+        });
+    }
+    
+    return card;
+}
+
+function getStatusText(status) {
+    const statusTexts = {
+        'tamamlandı': 'Tamamlandı',
+        'çalışıyor': 'Çalışıyor',
+        'hata': 'Hata',
+        'beklemede': 'Beklemede'
+    };
+    return statusTexts[status] || status;
+}
+
+function getStatusBadgeClass(status) {
+    const classes = {
+        'tamamlandı': 'bg-success',
+        'çalışıyor': 'bg-info',
+        'hata': 'bg-danger',
+        'beklemede': 'bg-warning'
+    };
+    return classes[status] || 'bg-secondary';
+}
+
+function getTypeText(type) {
+    const typeTexts = {
+        'lda': 'LDA',
+        'sentiment': 'Duygu',
+        'wordcloud': 'Kelime Bulutu'
+    };
+    return typeTexts[type] || type;
+}
+
+function getTypeBadgeClass(type) {
+    const classes = {
+        'lda': 'bg-primary',
+        'sentiment': 'bg-success', 
+        'wordcloud': 'bg-info'
+    };
+    return classes[type] || 'bg-secondary';
+}
+
+function calculateDuration(startDate, endDate) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffMs = end - start;
+    const diffMins = Math.round(diffMs / 60000);
+    
+    if (diffMins < 60) {
+        return `${diffMins} dakika`;
+    } else {
+        const hours = Math.floor(diffMins / 60);
+        const mins = diffMins % 60;
+        return `${hours}s ${mins}d`;
+    }
+}
+
+function updateStatistics() {
+    const total = allResults.length;
+    const completed = allResults.filter(r => r.status === 'tamamlandı').length;
+    const running = allResults.filter(r => r.status === 'çalışıyor').length;
+    
+    document.getElementById('totalAnalyses').textContent = total;
+    document.getElementById('completedAnalyses').textContent = completed;
+    document.getElementById('runningAnalyses').textContent = running;
+}
+
+function viewResults(analysisId) {
+    // Sonuç detay sayfasına yönlendir
+    window.location.href = `/sonuclar/${analysisId}`;
+}
+
+function downloadResults(analysisId) {
+    showAlert('info', 'İndirme işlemi başlatılıyor...');
+    // TODO: İndirme API'si implement edilecek
+}
+
+function shareResults(analysisId) {
+    const shareUrl = `${window.location.origin}/sonuclar/${analysisId}`;
+    if (navigator.share) {
+        navigator.share({
+            title: 'Twitter Analiz Sonucu',
+            url: shareUrl
+        });
+    } else {
+        copyToClipboard(shareUrl);
+    }
+}
+
+function deleteResults(analysisId) {
+    if (confirm('Bu analiz sonucunu silmek istediğinizden emin misiniz?')) {
+        showAlert('info', 'Analiz sonucu siliniyor...');
+        // TODO: Silme API'si implement edilecek
+    }
+}
+
+// Debounce function is already defined in app.js
+</script>
+{% endblock %} 

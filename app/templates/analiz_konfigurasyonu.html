@@ -1,0 +1,986 @@
+{% extends "base.html" %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ url_for('main.veri_secimi') }}">Veri Seçimi</a></li>
+<li class="breadcrumb-item active" aria-current="page">Analiz Konfigürasyonu</li>
+{% endblock %}
+
+{% block subtitle %}
+<p class="text-muted mb-0">Analiz türlerini ve parametrelerini ayarlayın</p>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Analiz Ayarları -->
+    <div class="col-lg-8 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="mb-0">
+                    <i class="bi bi-gear text-primary"></i>
+                    Analiz Ayarları
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="analysisConfigForm">
+                    <!-- Analiz Türleri -->
+                    <div class="mb-4">
+                        <h6 class="mb-3">Analiz Türleri</h6>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <div class="form-check form-switch mb-2">
+                                            <input class="form-check-input" type="checkbox" id="enableLDA" checked>
+                                            <label class="form-check-label" for="enableLDA">
+                                                <strong>LDA Konu Modelleme</strong>
+                                            </label>
+                                        </div>
+                                        <i class="bi bi-tags display-6 text-primary mb-2"></i>
+                                        <p class="text-muted small mb-0">
+                                            Tweet'lerdeki gizli konuları keşfedin
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <div class="form-check form-switch mb-2">
+                                            <input class="form-check-input" type="checkbox" id="enableSentiment" checked>
+                                            <label class="form-check-label" for="enableSentiment">
+                                                <strong>Duygu Analizi</strong>
+                                            </label>
+                                        </div>
+                                        <i class="bi bi-emoji-smile display-6 text-success mb-2"></i>
+                                        <p class="text-muted small mb-0">
+                                            Pozitif, negatif, nötr duyguları belirleyin
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <div class="form-check form-switch mb-2">
+                                            <input class="form-check-input" type="checkbox" id="enableWordcloud" checked>
+                                            <label class="form-check-label" for="enableWordcloud">
+                                                <strong>Kelime Bulutu</strong>
+                                            </label>
+                                        </div>
+                                        <i class="bi bi-cloud display-6 text-info mb-2"></i>
+                                        <p class="text-muted small mb-0">
+                                            En sık kullanılan kelimeleri görselleştirin
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LDA Parametreleri -->
+                    <div class="mb-4" id="ldaParams">
+                        <h6 class="mb-3">LDA Parametreleri</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="numTopics" class="form-label">
+                                    <strong>Konu Sayısı</strong>
+                                    <small class="text-info">(Analiz kalitesini doğrudan etkiler)</small>
+                                </label>
+                                <input type="range" class="form-range" id="numTopics" min="2" max="8" value="5">
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">2 (Hızlı)</small>
+                                    <small class="text-primary fw-bold" id="topicsValue">5</small>
+                                    <small class="text-muted">8 (Detaylı)</small>
+                                </div>
+                                <small class="text-muted">2-3: Hızlı | 4-5: Optimal | 6-8: Detaylı</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="ldaIterations" class="form-label">
+                                    <strong>Iterasyon Sayısı</strong>
+                                    <small class="text-warning">(Süreyi önemli ölçüde etkiler)</small>
+                                </label>
+                                <select class="form-select" id="ldaIterations">
+                                    <option value="10">10 (Hızlı - ~30 sn)</option>
+                                    <option value="20" selected>20 (Orta - ~1 dk)</option>
+                                    <option value="50">50 (Yavaş - ~3 dk)</option>
+                                </select>
+                                <small class="text-muted">Yüksek iterasyon = Daha iyi konu ayrımı</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sentiment Parametreleri -->
+                    <div class="mb-4" id="sentimentParams">
+                        <h6 class="mb-3">Duygu Analizi Parametreleri</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="batchSize" class="form-label">
+                                    <strong>Batch Size</strong>
+                                    <small class="text-success">(GPU bellek kullanımını etkiler)</small>
+                                </label>
+                                <select class="form-select" id="batchSize">
+                                    <option value="8">8 (Güvenli - Az RAM)</option>
+                                    <option value="16" selected>16 (Optimal)</option>
+                                    <option value="32">32 (Hızlı - Çok RAM)</option>
+                                </select>
+                                <small class="text-muted">Yüksek batch = Hızlı ama daha fazla bellek</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="sentimentModel" class="form-label">Model</label>
+                                <select class="form-select" id="sentimentModel">
+                                    <option value="turkish-bert" selected>Turkish BERT (Önerilen)</option>
+                                    <option value="multilingual-bert">Multilingual BERT</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- WordCloud Parametreleri -->
+                    <div class="mb-4" id="wordcloudParams">
+                        <h6 class="mb-3">Kelime Bulutu Parametreleri</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="maxWords" class="form-label">Maksimum Kelime Sayısı</label>
+                                <input type="range" class="form-range" id="maxWords" min="50" max="200" value="100">
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">50</small>
+                                    <small class="text-muted" id="maxWordsValue">100</small>
+                                    <small class="text-muted">200</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="colorScheme" class="form-label">Renk Şeması</label>
+                                <select class="form-select" id="colorScheme">
+                                    <option value="viridis" selected>Viridis</option>
+                                    <option value="plasma">Plasma</option>
+                                    <option value="inferno">Inferno</option>
+                                    <option value="magma">Magma</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Genel Ayarlar -->
+                    <div class="mb-4">
+                        <h6 class="mb-3">Genel Ayarlar</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="analysisName" class="form-label">
+                                    <strong>Analiz Adı</strong>
+                                    <small class="text-info">(Klasör adında kullanılır)</small>
+                                </label>
+                                <input type="text" class="form-control" id="analysisName" placeholder="Otomatik oluşturulacak">
+                                <small class="text-muted">Boş bırakılırsa otomatik isim oluşturulur</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="outputFormat" class="form-label">Çıktı Formatı</label>
+                                <select class="form-select" id="outputFormat">
+                                    <option value="html" selected>HTML (Etkileşimli)</option>
+                                    <option value="png">PNG (Görsel)</option>
+                                    <option value="both">Her İkisi</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer bg-transparent border-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <button type="button" class="btn btn-outline-secondary" onclick="resetToDefaults()">
+                        <i class="bi bi-arrow-clockwise"></i> Varsayılana Dön
+                    </button>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-primary" onclick="saveConfiguration()">
+                            <i class="bi bi-bookmark"></i> Yapılandırmayı Kaydet
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="startAnalysis()">
+                            <i class="bi bi-play-fill"></i> Analizi Başlat
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seçili Dosyalar ve Özet -->
+    <div class="col-lg-4 mb-4">
+        <!-- Seçili Dosyalar -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent border-0">
+                <h6 class="mb-0">
+                    <i class="bi bi-file-earmark-check text-success"></i>
+                    Seçili Dosyalar
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="selectedFilesList">
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-hourglass-split"></i>
+                        <p class="mb-0 small">Dosyalar yükleniyor...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analiz Özeti -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent border-0">
+                <h6 class="mb-0">
+                    <i class="bi bi-info-circle text-info"></i>
+                    Analiz Özeti
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted">Seçili Analiz Türleri:</small>
+                    <div id="selectedAnalysisTypes" class="mt-1">
+                        <span class="badge bg-primary me-1">LDA</span>
+                        <span class="badge bg-success me-1">Duygu</span>
+                        <span class="badge bg-info me-1">Kelime Bulutu</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted">Toplam Tweet:</small>
+                    <div class="fw-bold" id="totalTweets">-</div>
+                    <div class="small text-muted">
+                        <span id="selectedFileCount">0</span> dosya • 
+                        <span id="totalFileSize">0 B</span> • 
+                        <span id="totalTweetCount">0</span> tweet
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted">Tahmini Süre:</small>
+                    <div class="fw-bold" id="estimatedTime">-</div>
+                    <div class="small text-muted">
+                        <span id="analysisTypeCount">3</span> analiz türü
+                        <span class="badge bg-success ms-1" id="quickAnalysisBadge" style="display: none;">⚡ Hızlı</span>
+                    </div>
+                </div>
+                <div class="mb-0">
+                    <small class="text-muted">Çıktı Klasörü:</small>
+                    <div class="fw-bold small" id="outputFolder">sonuclar/</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kayıtlı Konfigürasyonlar -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0">
+                <h6 class="mb-0">
+                    <i class="bi bi-bookmark text-warning"></i>
+                    Kayıtlı Konfigürasyonlar
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="savedConfigurations">
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-bookmark"></i>
+                        <p class="mb-0 small">Henüz konfigürasyon kaydedilmemiş</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let selectedFiles = [];
+let allFiles = [];
+
+console.log('📊 Analiz Konfigürasyonu - JavaScript Yüklendi');
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 DOM Content Loaded - Sayfa hazır');
+    loadSelectedFiles();
+    setupEventListeners();
+    updateParameterDisplays();
+});
+
+function loadSelectedFiles() {
+    console.log('📂 Seçili dosyalar yükleniyor...');
+    
+    // LocalStorage'dan seçili dosyaları al
+    try {
+        const storedFiles = localStorage.getItem('selectedFiles');
+        if (storedFiles && storedFiles !== 'null' && storedFiles !== 'undefined') {
+            const parsedFiles = JSON.parse(storedFiles);
+            if (Array.isArray(parsedFiles) && parsedFiles.length > 0) {
+                selectedFiles = parsedFiles;
+                console.log('✅ Seçili dosyalar localStorage\'dan yüklendi:', selectedFiles);
+            } else {
+                selectedFiles = [];
+            }
+        } else {
+            console.log('⚠️ LocalStorage\'da selectedFiles bulunamadı');
+            selectedFiles = [];
+        }
+    } catch (error) {
+        console.error('❌ LocalStorage selectedFiles okuma hatası:', error);
+        selectedFiles = [];
+    }
+    
+    // Tek dosya seçimi kontrolü (eski sistem uyumluluğu)
+    if (selectedFiles.length === 0) {
+        const testFileSelected = localStorage.getItem('selectedFileForAnalysis');
+        if (testFileSelected && testFileSelected !== 'null' && testFileSelected !== 'undefined') {
+            console.log('🧪 Tek dosya seçimi bulundu:', testFileSelected);
+            selectedFiles = [testFileSelected];
+            // Yeni sisteme uyumlu hale getir
+            localStorage.setItem('selectedFiles', JSON.stringify(selectedFiles));
+        }
+    }
+    
+    // Eğer hala dosya yoksa, test dosyasını varsayılan olarak ekle
+    if (selectedFiles.length === 0) {
+        console.log('⚠️ Hiç dosya seçilmemiş, test dosyası ekleniyor...');
+        selectedFiles = ['test_tweets.json'];
+        localStorage.setItem('selectedFiles', JSON.stringify(selectedFiles));
+    }
+    
+    console.log('📋 Final seçili dosyalar:', selectedFiles);
+    
+    // Dosya bilgilerini yükle
+    loadFileDetails();
+}
+
+function loadFileDetails() {
+    console.log('📋 Dosya detayları yükleniyor...');
+    
+    // API'den dosya listesini al
+    fetch('/api/files')
+        .then(response => {
+            console.log('📡 API Response Status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('📦 API Response Data:', data);
+            if (data.success && data.data) {
+                allFiles = data.data;
+                console.log('✅ Dosya listesi başarıyla yüklendi:', allFiles.length, 'dosya');
+                displaySelectedFiles();
+                updateAnalysisSummary();
+            } else {
+                console.warn('⚠️ API başarılı ama veri yok, mock data kullanılıyor');
+                createMockFileData();
+            }
+        })
+        .catch(error => {
+            console.error('💥 API çağrısı başarısız:', error);
+            console.log('🔧 Fallback: Mock data kullanılıyor');
+            createMockFileData();
+        });
+}
+
+function createMockFileData() {
+    console.log('🔧 Mock dosya verisi oluşturuluyor...');
+    
+    allFiles = selectedFiles.map((fileName, index) => {
+        return {
+            id: `mock-${index}`,
+            dosya_adi: fileName,
+            tweet_sayisi: fileName.includes('test') ? 20 : 1000 + Math.floor(Math.random() * 500),
+            dosya_boyutu: 1024 * (50 + Math.floor(Math.random() * 200)), // 50-250 KB
+            olusturma_tarihi: new Date().toISOString()
+        };
+    });
+    
+    console.log('✅ Mock dosya verisi oluşturuldu:', allFiles);
+    displaySelectedFiles();
+    updateAnalysisSummary();
+}
+
+function displaySelectedFiles() {
+    const container = document.getElementById('selectedFilesList');
+    if (!container) {
+        console.error('❌ selectedFilesList container bulunamadı');
+        return;
+    }
+    
+    console.log('🖼️ Seçili dosyalar görüntüleniyor...');
+    
+    if (selectedFiles.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted py-3">
+                <i class="bi bi-inbox"></i>
+                <p class="mb-0 mt-2">Dosya seçilmemiş</p>
+                <a href="/veri-secimi" class="btn btn-sm btn-primary mt-2">Dosya Seç</a>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    let totalTweets = 0;
+    let totalSize = 0;
+    
+    selectedFiles.forEach((fileName, index) => {
+        // Dosya bilgilerini bul
+        let fileInfo = allFiles.find(f => 
+            f.dosya_adi === fileName || 
+            f.id === fileName ||
+            f.dosya_adi.includes(fileName) ||
+            fileName.includes(f.dosya_adi)
+        );
+        
+        if (!fileInfo) {
+            // Fallback dosya bilgisi
+            fileInfo = {
+                dosya_adi: fileName,
+                tweet_sayisi: fileName.includes('test') ? 20 : 500,
+                dosya_boyutu: 1024 * 100, // 100 KB
+                olusturma_tarihi: new Date().toISOString()
+            };
+        }
+        
+        totalTweets += fileInfo.tweet_sayisi || 0;
+        totalSize += fileInfo.dosya_boyutu || 0;
+        
+        const sizeText = formatFileSize(fileInfo.dosya_boyutu || 0);
+        const dateText = fileInfo.olusturma_tarihi ? 
+            formatDate(fileInfo.olusturma_tarihi) : 'Bilinmiyor';
+        
+        html += `
+            <div class="d-flex align-items-center mb-2 p-2 bg-light rounded">
+                <div class="me-2">
+                    <i class="bi bi-file-earmark-text text-primary"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-bold small">${fileInfo.dosya_adi}</div>
+                    <div class="text-muted small">
+                        ${formatNumber(fileInfo.tweet_sayisi || 0)} tweet • ${sizeText}
+                    </div>
+                </div>
+                <button class="btn btn-sm btn-outline-danger" onclick="removeFile('${fileName}')">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+    
+    // Toplam bilgileri güncelle
+    document.getElementById('totalTweetCount').textContent = formatNumber(totalTweets);
+    document.getElementById('totalFileSize').textContent = formatFileSize(totalSize);
+    document.getElementById('selectedFileCount').textContent = selectedFiles.length;
+    
+    console.log(`✅ ${selectedFiles.length} dosya görüntülendi, toplam ${totalTweets} tweet`);
+}
+
+function removeFile(fileName) {
+    selectedFiles = selectedFiles.filter(f => f !== fileName);
+    localStorage.setItem('selectedFiles', JSON.stringify(selectedFiles));
+    
+    if (selectedFiles.length === 0) {
+        showAlert('warning', 'Tüm dosyalar kaldırıldı. Veri seçimi sayfasına yönlendiriliyorsunuz...');
+        setTimeout(() => {
+            window.location.href = '/veri-secimi';
+        }, 2000);
+        return;
+    }
+    
+    displaySelectedFiles();
+    updateAnalysisSummary();
+    showAlert('info', 'Dosya kaldırıldı.');
+}
+
+function updateAnalysisSummary() {
+    console.log('📊 Analiz özeti güncelleniyor...');
+    
+    const totalTweets = allFiles.reduce((sum, file) => {
+        if (selectedFiles.includes(file.dosya_adi) || selectedFiles.includes(file.id)) {
+            return sum + (file.tweet_sayisi || 0);
+        }
+        return sum;
+    }, 0);
+    
+    // Ana toplam tweet sayısını güncelle
+    const totalTweetsElement = document.getElementById('totalTweets');
+    if (totalTweetsElement) {
+        totalTweetsElement.textContent = formatNumber(totalTweets);
+    }
+    
+    // Tahmini süre hesaplama
+    const estimatedTime = calculateEstimatedTime(totalTweets);
+    const estimatedTimeElement = document.getElementById('estimatedTime');
+    if (estimatedTimeElement) {
+        estimatedTimeElement.textContent = estimatedTime;
+    }
+    
+    // Analiz türü sayısı
+    const enabledAnalyses = getEnabledAnalyses().length;
+    const analysisTypeCountElement = document.getElementById('analysisTypeCount');
+    if (analysisTypeCountElement) {
+        analysisTypeCountElement.textContent = enabledAnalyses;
+    }
+    
+    // Seçili analiz türlerini güncelle
+    updateSelectedAnalysisTypes();
+    
+    // Hızlı analiz kontrolü
+    const isQuickAnalysis = totalTweets <= 50;
+    const quickBadge = document.getElementById('quickAnalysisBadge');
+    if (quickBadge) {
+        quickBadge.style.display = isQuickAnalysis ? 'inline-block' : 'none';
+    }
+    
+    console.log(`✅ Analiz özeti güncellendi: ${totalTweets} tweet, ${enabledAnalyses} analiz türü`);
+}
+
+function calculateEstimatedTime(tweetCount) {
+    const enabledAnalyses = getEnabledAnalyses();
+    const baseTimePerTweet = 0.5; // saniye
+    const analysisMultiplier = enabledAnalyses.length;
+    
+    let totalSeconds = tweetCount * baseTimePerTweet * analysisMultiplier;
+    
+    // Hızlı analiz için bonus
+    if (tweetCount <= 50) {
+        totalSeconds = Math.min(totalSeconds, 30); // Max 30 saniye
+    }
+    
+    if (totalSeconds < 60) {
+        return `${Math.round(totalSeconds)} saniye`;
+    } else if (totalSeconds < 3600) {
+        return `${Math.round(totalSeconds / 60)} dakika`;
+    } else {
+        return `${Math.round(totalSeconds / 3600)} saat`;
+    }
+}
+
+function setupEventListeners() {
+    console.log('🔧 Event listenerlar kuruluyor...');
+    
+    // Analiz türü değişiklikleri
+    ['enableLDA', 'enableSentiment', 'enableWordcloud'].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('change', function() {
+                updateParameterVisibility();
+                updateAnalysisSummary();
+            });
+        }
+    });
+    
+    // Parametre değişiklikleri
+    const numTopics = document.getElementById('numTopics');
+    if (numTopics) {
+        numTopics.addEventListener('input', function() {
+            document.getElementById('topicsValue').textContent = this.value;
+            updateAnalysisSummary();
+        });
+    }
+    
+    const maxWords = document.getElementById('maxWords');
+    if (maxWords) {
+        maxWords.addEventListener('input', function() {
+            document.getElementById('maxWordsValue').textContent = this.value;
+        });
+    }
+    
+    console.log('✅ Event listenerlar kuruldu');
+}
+
+function updateParameterDisplays() {
+    // Slider değerlerini güncelle
+    const numTopics = document.getElementById('numTopics');
+    const topicsValue = document.getElementById('topicsValue');
+    if (numTopics && topicsValue) {
+        topicsValue.textContent = numTopics.value;
+    }
+    
+    const maxWords = document.getElementById('maxWords');
+    const maxWordsValue = document.getElementById('maxWordsValue');
+    if (maxWords && maxWordsValue) {
+        maxWordsValue.textContent = maxWords.value;
+    }
+    
+    updateParameterVisibility();
+}
+
+function updateParameterVisibility() {
+    const ldaEnabled = document.getElementById('enableLDA')?.checked;
+    const sentimentEnabled = document.getElementById('enableSentiment')?.checked;
+    const wordcloudEnabled = document.getElementById('enableWordcloud')?.checked;
+    
+    const ldaParams = document.getElementById('ldaParams');
+    const sentimentParams = document.getElementById('sentimentParams');
+    const wordcloudParams = document.getElementById('wordcloudParams');
+    
+    if (ldaParams) ldaParams.style.display = ldaEnabled ? 'block' : 'none';
+    if (sentimentParams) sentimentParams.style.display = sentimentEnabled ? 'block' : 'none';
+    if (wordcloudParams) wordcloudParams.style.display = wordcloudEnabled ? 'block' : 'none';
+}
+
+function updateSelectedAnalysisTypes() {
+    const container = document.getElementById('selectedAnalysisTypes');
+    if (!container) return;
+    
+    const badges = [];
+    
+    if (document.getElementById('enableLDA')?.checked) {
+        badges.push('<span class="badge bg-primary me-1">LDA</span>');
+    }
+    if (document.getElementById('enableSentiment')?.checked) {
+        badges.push('<span class="badge bg-success me-1">Duygu</span>');
+    }
+    if (document.getElementById('enableWordcloud')?.checked) {
+        badges.push('<span class="badge bg-info me-1">Kelime Bulutu</span>');
+    }
+    
+    if (badges.length === 0) {
+        container.innerHTML = '<span class="text-muted">Hiç analiz türü seçilmemiş</span>';
+    } else {
+        container.innerHTML = badges.join('');
+    }
+}
+
+function getEnabledAnalyses() {
+    const analyses = [];
+    
+    if (document.getElementById('enableLDA')?.checked) {
+        analyses.push('lda');
+    }
+    if (document.getElementById('enableSentiment')?.checked) {
+        analyses.push('sentiment');
+    }
+    if (document.getElementById('enableWordcloud')?.checked) {
+        analyses.push('wordcloud');
+    }
+    
+    return analyses;
+}
+
+function generateAnalysisName() {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('tr-TR', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric'
+    }).replace(/\./g, '');
+    
+    const timeStr = now.toLocaleTimeString('tr-TR', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false
+    }).replace(':', '');
+    
+    const enabledAnalyses = getEnabledAnalyses();
+    const analysisTypes = enabledAnalyses.map(type => {
+        switch(type) {
+            case 'lda': return 'Konu';
+            case 'sentiment': return 'Duygu';
+            case 'wordcloud': return 'Kelime';
+            default: return type;
+        }
+    }).join('-');
+    
+    return `${analysisTypes}_Analizi_${dateStr}_${timeStr}`;
+}
+
+function startAnalysis() {
+    console.log('🚀 Analiz başlatılıyor...');
+    
+    const enabledAnalyses = getEnabledAnalyses();
+    if (enabledAnalyses.length === 0) {
+        showAlert('warning', 'Lütfen en az bir analiz türü seçin.');
+        return;
+    }
+    
+    if (selectedFiles.length === 0) {
+        showAlert('warning', 'Lütfen analiz edilecek dosyaları seçin.');
+        return;
+    }
+    
+    // Tweet sayısını hesapla ve hızlı analiz kontrolü yap
+    const totalTweets = allFiles.reduce((sum, file) => {
+        if (selectedFiles.includes(file.dosya_adi) || selectedFiles.includes(file.id)) {
+            return sum + (file.tweet_sayisi || 0);
+        }
+        return sum;
+    }, 0);
+    
+    // Analiz adını kontrol et - boşsa otomatik oluştur
+    let analysisName = document.getElementById('analysisName')?.value?.trim();
+    if (!analysisName) {
+        analysisName = generateAnalysisName();
+        console.log('🏷️ Otomatik analiz adı oluşturuldu:', analysisName);
+    }
+    
+    // Analiz parametrelerini topla
+    const params = {
+        file_ids: selectedFiles,
+        analiz_turleri: enabledAnalyses,
+        analysis_name: analysisName,
+        output_format: document.getElementById('outputFormat')?.value || 'html',
+        quick_analysis: totalTweets <= 100 // 100 veya daha az tweet için hızlı analiz
+    };
+    
+    // LDA parametreleri
+    if (enabledAnalyses.includes('lda')) {
+        params.lda_konu_sayisi = parseInt(document.getElementById('numTopics')?.value || 8);
+        params.lda_iterations = parseInt(document.getElementById('ldaIterations')?.value || 20);
+    }
+    
+    // Sentiment parametreleri
+    if (enabledAnalyses.includes('sentiment')) {
+        params.batch_size = parseInt(document.getElementById('batchSize')?.value || 16);
+        params.sentiment_model = document.getElementById('sentimentModel')?.value || 'turkish-bert';
+    }
+    
+    // WordCloud parametreleri
+    if (enabledAnalyses.includes('wordcloud')) {
+        params.max_words = parseInt(document.getElementById('maxWords')?.value || 100);
+        params.color_scheme = document.getElementById('colorScheme')?.value || 'viridis';
+    }
+    
+    console.log('📋 Analiz parametreleri:', params);
+    
+    // Analizi başlat
+    showAlert('info', 'Analiz başlatılıyor...');
+    
+    fetch('/analiz/baslat', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params)
+    })
+    .then(response => {
+        console.log('📡 Analiz başlatma response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('📦 Analiz başlatma response:', data);
+        if (data.success) {
+            showAlert('success', 'Analiz başarıyla başlatıldı!');
+            
+            // LocalStorage'ı temizle
+            localStorage.removeItem('selectedFiles');
+            localStorage.removeItem('selectedFileForAnalysis');
+            
+            // Analiz ID'sini doğru şekilde al
+            const analizId = data.data?.analiz_id || data.analiz_id;
+            console.log('🔍 Analiz ID:', analizId);
+            
+            if (!analizId) {
+                console.error('❌ Analiz ID bulunamadı:', data);
+                showAlert('danger', 'Analiz ID alınamadı. Analiz listesi sayfasına yönlendiriliyorsunuz...');
+                setTimeout(() => {
+                    window.location.href = '/analiz-listesi';
+                }, 1500);
+                return;
+            }
+            
+            // Sonuç sayfasına yönlendir
+            setTimeout(() => {
+                window.location.href = `/sonuclar/${analizId}`;
+            }, 1500);
+        } else {
+            console.error('❌ Analiz başlatma hatası:', data.error);
+            showAlert('danger', 'Analiz başlatılırken hata oluştu: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('💥 Analiz başlatma isteği başarısız:', error);
+        showAlert('danger', 'Analiz başlatılırken hata oluştu: ' + error.message);
+    });
+}
+
+function saveConfiguration() {
+    const config = {
+        enableLDA: document.getElementById('enableLDA')?.checked,
+        enableSentiment: document.getElementById('enableSentiment')?.checked,
+        enableWordcloud: document.getElementById('enableWordcloud')?.checked,
+        numTopics: document.getElementById('numTopics')?.value,
+        ldaIterations: document.getElementById('ldaIterations')?.value,
+        batchSize: document.getElementById('batchSize')?.value,
+        sentimentModel: document.getElementById('sentimentModel')?.value,
+        maxWords: document.getElementById('maxWords')?.value,
+        colorScheme: document.getElementById('colorScheme')?.value,
+        analysisName: document.getElementById('analysisName')?.value,
+        outputFormat: document.getElementById('outputFormat')?.value
+    };
+    
+    localStorage.setItem('analysisConfig', JSON.stringify(config));
+    showAlert('success', 'Yapılandırma kaydedildi!');
+}
+
+function loadConfiguration() {
+    try {
+        const config = localStorage.getItem('analysisConfig');
+        if (config) {
+            const parsedConfig = JSON.parse(config);
+            
+            // Checkbox'ları ayarla
+            if (document.getElementById('enableLDA')) document.getElementById('enableLDA').checked = parsedConfig.enableLDA !== false;
+            if (document.getElementById('enableSentiment')) document.getElementById('enableSentiment').checked = parsedConfig.enableSentiment !== false;
+            if (document.getElementById('enableWordcloud')) document.getElementById('enableWordcloud').checked = parsedConfig.enableWordcloud !== false;
+            
+            // Diğer parametreleri ayarla
+            if (parsedConfig.numTopics && document.getElementById('numTopics')) {
+                document.getElementById('numTopics').value = parsedConfig.numTopics;
+                document.getElementById('topicsValue').textContent = parsedConfig.numTopics;
+            }
+            
+            if (parsedConfig.ldaIterations && document.getElementById('ldaIterations')) {
+                document.getElementById('ldaIterations').value = parsedConfig.ldaIterations;
+            }
+            
+            if (parsedConfig.batchSize && document.getElementById('batchSize')) {
+                document.getElementById('batchSize').value = parsedConfig.batchSize;
+            }
+            
+            if (parsedConfig.sentimentModel && document.getElementById('sentimentModel')) {
+                document.getElementById('sentimentModel').value = parsedConfig.sentimentModel;
+            }
+            
+            if (parsedConfig.maxWords && document.getElementById('maxWords')) {
+                document.getElementById('maxWords').value = parsedConfig.maxWords;
+                document.getElementById('maxWordsValue').textContent = parsedConfig.maxWords;
+            }
+            
+            if (parsedConfig.colorScheme && document.getElementById('colorScheme')) {
+                document.getElementById('colorScheme').value = parsedConfig.colorScheme;
+            }
+            
+            if (parsedConfig.analysisName && document.getElementById('analysisName')) {
+                document.getElementById('analysisName').value = parsedConfig.analysisName;
+            }
+            
+            if (parsedConfig.outputFormat && document.getElementById('outputFormat')) {
+                document.getElementById('outputFormat').value = parsedConfig.outputFormat;
+            }
+            
+            updateParameterVisibility();
+            updateAnalysisSummary();
+        }
+    } catch (error) {
+        console.error('Yapılandırma yüklenirken hata:', error);
+    }
+}
+
+function resetToDefaults() {
+    // Checkbox'ları varsayılana döndür
+    if (document.getElementById('enableLDA')) document.getElementById('enableLDA').checked = true;
+    if (document.getElementById('enableSentiment')) document.getElementById('enableSentiment').checked = true;
+    if (document.getElementById('enableWordcloud')) document.getElementById('enableWordcloud').checked = true;
+    
+    // Parametreleri varsayılana döndür
+    if (document.getElementById('numTopics')) {
+        document.getElementById('numTopics').value = 5;
+        document.getElementById('topicsValue').textContent = '5';
+    }
+    
+    if (document.getElementById('ldaIterations')) {
+        document.getElementById('ldaIterations').value = 20;
+    }
+    
+    if (document.getElementById('batchSize')) {
+        document.getElementById('batchSize').value = 16;
+    }
+    
+    if (document.getElementById('sentimentModel')) {
+        document.getElementById('sentimentModel').value = 'turkish-bert';
+    }
+    
+    if (document.getElementById('maxWords')) {
+        document.getElementById('maxWords').value = 100;
+        document.getElementById('maxWordsValue').textContent = '100';
+    }
+    
+    if (document.getElementById('colorScheme')) {
+        document.getElementById('colorScheme').value = 'viridis';
+    }
+    
+    if (document.getElementById('analysisName')) {
+        document.getElementById('analysisName').value = '';
+    }
+    
+    if (document.getElementById('outputFormat')) {
+        document.getElementById('outputFormat').value = 'html';
+    }
+    
+    updateParameterVisibility();
+    updateAnalysisSummary();
+    showAlert('info', 'Ayarlar varsayılan değerlere döndürüldü.');
+}
+
+// Utility functions
+function formatNumber(number) {
+    if (typeof number !== 'number') return '0';
+    return number.toLocaleString('tr-TR');
+}
+
+function formatFileSize(bytes) {
+    if (typeof bytes !== 'number') return '0 B';
+    
+    if (bytes === 0) return '0 B';
+    
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'Bilinmiyor';
+    
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleString('tr-TR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (error) {
+        return 'Geçersiz tarih';
+    }
+}
+
+function showAlert(type, message, duration = 5000) {
+    const alertContainer = document.getElementById('alertContainer');
+    if (!alertContainer) {
+        console.log(`${type.toUpperCase()}: ${message}`);
+        return;
+    }
+    
+    const alertId = 'alert-' + Date.now();
+    const icons = {
+        'success': 'check-circle',
+        'danger': 'exclamation-triangle',
+        'warning': 'exclamation-triangle',
+        'info': 'info-circle'
+    };
+    
+    const alertHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert" id="${alertId}">
+            <i class="bi bi-${icons[type] || 'info-circle'}"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+    
+    alertContainer.insertAdjacentHTML('beforeend', alertHTML);
+    
+    if (duration > 0) {
+        setTimeout(() => {
+            const alertElement = document.getElementById(alertId);
+            if (alertElement) {
+                alertElement.remove();
+            }
+        }, duration);
+    }
+}
+
+console.log('🎯 Analiz Konfigürasyonu JavaScript dosyası tamamen yüklendi');
+</script>
+{% endblock %} 

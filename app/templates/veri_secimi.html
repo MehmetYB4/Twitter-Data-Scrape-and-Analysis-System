@@ -1,0 +1,467 @@
+{% extends "base.html" %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">Veri Seçimi</li>
+{% endblock %}
+
+{% block subtitle %}
+<p class="text-muted mb-0">Analiz edilecek tweet arşiv dosyalarınızı seçin</p>
+{% endblock %}
+
+{% block content %}
+<!-- Files List -->
+<div class="row">
+    <div class="col">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-file-earmark-text text-primary"></i>
+                    Mevcut Dosyalar
+                    <span class="badge bg-primary ms-2" id="fileCount">0</span>
+                </h5>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshFileList()">
+                        <i class="bi bi-arrow-clockwise"></i> Yenile
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div id="filesContainer">
+                    <div class="text-center py-5" id="noFilesMessage">
+                        <i class="bi bi-folder2-open display-4 text-muted"></i>
+                        <h5 class="mt-3 text-muted">Tweet arşiv dosyaları aranıyor...</h5>
+                        <p class="text-muted">Lütfen bekleyin</p>
+                    </div>
+                    
+                    <div class="table-responsive" id="filesTable" style="display: none;">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th style="width: 40px;">
+                                        <input type="checkbox" class="form-check-input" id="selectAll">
+                                    </th>
+                                    <th>Dosya Adı</th>
+                                    <th>Tweet Sayısı</th>
+                                    <th>Boyut</th>
+                                    <th>Tarih</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody id="filesTableBody">
+                                <!-- Dosyalar dinamik olarak yüklenecek -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Selection Actions -->
+            <div class="card-footer bg-transparent border-0" id="selectionActions" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span id="selectionInfo" class="text-muted"></span>
+                    <div class="btn-group">
+                        <button class="btn btn-success" onclick="startAnalysisWithSelected()">
+                            <i class="bi bi-play-fill"></i> Seçili Dosyaları Analiz Et
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- File Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-eye"></i> Dosya Önizleme
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="previewContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Yükleniyor...</span>
+                        </div>
+                        <p class="mt-2">Dosya yükleniyor...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                <button type="button" class="btn btn-primary" onclick="selectFileForAnalysis()">
+                    Bu Dosyayı Analiz Et
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+console.log('🚀 Veri Seçimi Sayfası - JavaScript Yüklendi');
+
+// Global değişkenler
+let selectedFiles = new Set();
+let allFiles = [];
+let currentPreviewFile = null;
+
+// Dosya seçimi sayfası - yardımcı fonksiyonlar app.js'de tanımlı
+
+// Dosya listesi yükleme
+function loadFileList() {
+    console.log('📁 Dosya listesi yükleniyor...');
+    
+    fetch('/api/files')
+        .then(function(response) {
+            console.log('📡 API Response Status:', response.status);
+            return response.json();
+        })
+        .then(function(data) {
+            console.log('📦 API Response Data:', data);
+            if (data.success) {
+                allFiles = data.data;
+                console.log('✅ Yüklenen dosya sayısı:', allFiles.length);
+                displayFiles(allFiles);
+                updateFileCount(allFiles.length);
+            } else {
+                console.error('❌ API Error:', data.error);
+                showAlert('danger', 'Dosyalar yüklenirken hata oluştu: ' + data.error);
+            }
+        })
+        .catch(function(error) {
+            console.error('💥 Dosya listesi yüklenirken hata:', error);
+            showAlert('danger', 'Dosya listesi yüklenirken hata oluştu: ' + error.message);
+        });
+}
+
+// Dosyaları görüntüleme
+function displayFiles(files) {
+    console.log('🖼️ displayFiles çağrıldı, dosya sayısı:', files.length);
+    
+    const noFilesMessage = document.getElementById('noFilesMessage');
+    const filesTable = document.getElementById('filesTable');
+    const tableBody = document.getElementById('filesTableBody');
+    
+    if (files.length === 0) {
+        noFilesMessage.innerHTML = `
+            <i class="bi bi-folder2-open display-4 text-muted"></i>
+            <h5 class="mt-3 text-muted">Henüz dosya bulunamadı</h5>
+            <p class="text-muted">tweet_arsivleri klasörüne JSON dosyalarınızı ekleyin</p>
+        `;
+        noFilesMessage.style.display = 'block';
+        filesTable.style.display = 'none';
+        return;
+    }
+    
+    noFilesMessage.style.display = 'none';
+    filesTable.style.display = 'block';
+    
+    tableBody.innerHTML = '';
+    
+    files.forEach(function(file) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>
+                <input type="checkbox" class="form-check-input" name="fileSelect" value="${file.id}" 
+                       onchange="updateSelection('${file.id}', this.checked)">
+            </td>
+            <td>
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-file-earmark-text text-primary me-2"></i>
+                    <div>
+                        <div class="fw-medium">${file.dosya_adi || file.isim || 'Bilinmeyen dosya'}</div>
+                        <small class="text-muted">${file.dosya_yolu || file.yol || 'Bilinmeyen yol'}</small>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <span class="badge bg-info">${formatNumber(file.tweet_sayisi || 0)}</span>
+            </td>
+            <td>
+                ${formatFileSize(file.dosya_boyutu || file.boyut || 0)}
+            </td>
+            <td>
+                <small class="text-muted">${formatDate(file.olusturma_tarihi || file.tarih)}</small>
+            </td>
+            <td>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" onclick="previewFile('${file.id}')" title="Önizleme">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn btn-success" onclick="startSingleAnalysis('${file.id}')" title="Analiz Et">
+                        <i class="bi bi-play-fill"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+    
+    console.log('🎯 Dosyalar başarıyla görüntülendi!');
+}
+
+// Dosya seçim işlemleri
+function updateSelection(fileId, isSelected) {
+    if (isSelected) {
+        selectedFiles.add(fileId);
+    } else {
+        selectedFiles.delete(fileId);
+    }
+    updateSelectionUI();
+}
+
+function updateSelectionUI() {
+    const selectionActions = document.getElementById('selectionActions');
+    const selectionInfo = document.getElementById('selectionInfo');
+    
+    if (selectedFiles.size > 0) {
+        selectionActions.style.display = 'block';
+        const selectedCount = selectedFiles.size;
+        let totalTweets = 0;
+        
+        selectedFiles.forEach(function(fileId) {
+            const file = allFiles.find(function(f) { return f.id === fileId; });
+            if (file) {
+                totalTweets += file.tweet_sayisi;
+            }
+        });
+        
+        selectionInfo.textContent = selectedCount + ' dosya seçildi (' + formatNumber(totalTweets) + ' tweet)';
+    } else {
+        selectionActions.style.display = 'none';
+    }
+}
+
+function updateFileCount(count) {
+    document.getElementById('fileCount').textContent = count;
+}
+
+// Dosya önizleme
+function previewFile(fileId) {
+    currentPreviewFile = fileId;
+    const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+    modal.show();
+    
+    // Dosya önizlemesini yükle
+    fetch('/api/files/' + fileId + '/preview')
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            if (data.success) {
+                displayPreview(data.data);
+            } else {
+                document.getElementById('previewContent').innerHTML = 
+                    '<div class="alert alert-danger">Önizleme yüklenemedi: ' + data.error + '</div>';
+            }
+        })
+        .catch(function(error) {
+            document.getElementById('previewContent').innerHTML = 
+                '<div class="alert alert-danger">Önizleme yüklenirken hata oluştu.</div>';
+        });
+}
+
+function displayPreview(previewData) {
+    const content = document.getElementById('previewContent');
+    
+    let html = `
+        <div class="mb-3">
+            <h6>Dosya: ${previewData.filename}</h6>
+            <p class="text-muted">Toplam ${formatNumber(previewData.total_tweets)} tweet</p>
+        </div>
+        <div class="mb-3">
+            <h6>İlk 10 Tweet Önizlemesi:</h6>
+        </div>
+    `;
+    
+    if (previewData.preview && previewData.preview.length > 0) {
+        html += '<div class="list-group">';
+        previewData.preview.forEach(function(tweet, index) {
+            html += `
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <small class="text-muted">#${index + 1}</small>
+                            <p class="mb-1">${tweet.substring(0, 200)}${tweet.length > 200 ? '...' : ''}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+    } else {
+        html += '<div class="alert alert-warning">Önizlenecek tweet bulunamadı.</div>';
+    }
+    
+    content.innerHTML = html;
+}
+
+// Storage helper fonksiyonları
+if (typeof Storage === 'undefined') {
+    window.Storage = {
+        set: function(key, value) {
+            localStorage.setItem(key, JSON.stringify(value));
+        },
+        get: function(key, defaultValue = null) {
+            const item = localStorage.getItem(key);
+            return item ? JSON.parse(item) : defaultValue;
+        },
+        remove: function(key) {
+            localStorage.removeItem(key);
+        }
+    };
+}
+
+// Analiz işlemleri
+function startSingleAnalysis(fileId) {
+    console.log('🚀 Tek dosya analiz için kaydediliyor:', fileId);
+    
+    // Dosya bilgisini bul
+    const file = allFiles.find(f => f.id === fileId || f.dosya_adi === fileId);
+    if (file) {
+        localStorage.setItem('selectedFiles', JSON.stringify([file.dosya_adi]));
+        localStorage.setItem('selectedFileForAnalysis', file.dosya_adi);
+        localStorage.removeItem('selectedFilesForAnalysis');
+        
+        showAlert('success', `${file.dosya_adi} analiz için seçildi!`);
+        setTimeout(() => {
+            window.location.href = '/analiz-konfigurasyonu';
+        }, 1000);
+    } else {
+        showAlert('danger', 'Dosya bulunamadı!');
+    }
+}
+
+function startAnalysisWithSelected() {
+    if (selectedFiles.size > 0) {
+        console.log('🚀 Seçili dosyalar analiz için kaydediliyor:', Array.from(selectedFiles));
+        
+        // Seçili dosyaların adlarını al
+        const selectedFileNames = [];
+        selectedFiles.forEach(fileId => {
+            const file = allFiles.find(f => f.id === fileId || f.dosya_adi === fileId);
+            if (file) {
+                selectedFileNames.push(file.dosya_adi);
+            }
+        });
+        
+        localStorage.setItem('selectedFiles', JSON.stringify(selectedFileNames));
+        localStorage.removeItem('selectedFileForAnalysis');
+        
+        showAlert('success', `${selectedFileNames.length} dosya analiz için seçildi!`);
+        setTimeout(() => {
+            window.location.href = '/analiz-konfigurasyonu';
+        }, 1000);
+    } else {
+        showAlert('warning', 'Lütfen en az bir dosya seçin.');
+    }
+}
+
+function selectFileForAnalysis() {
+    if (currentPreviewFile) {
+        const file = allFiles.find(f => f.id === currentPreviewFile);
+        if (file) {
+            localStorage.setItem('selectedFiles', JSON.stringify([file.dosya_adi]));
+            localStorage.setItem('selectedFileForAnalysis', file.dosya_adi);
+            
+            // Modal'ı kapat
+            const modal = bootstrap.Modal.getInstance(document.getElementById('previewModal'));
+            if (modal) modal.hide();
+            
+            showAlert('success', `${file.dosya_adi} analiz için seçildi!`);
+            setTimeout(() => {
+                window.location.href = '/analiz-konfigurasyonu';
+            }, 1000);
+        }
+    }
+}
+
+function refreshFileList() {
+    loadFileList();
+    showAlert('info', 'Dosya listesi yenilendi.');
+}
+
+// Sayfa yüklendiğinde
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 DOM Content Loaded - Sayfa hazır');
+    
+    // Select all checkbox
+    const selectAllCheckbox = document.getElementById('selectAll');
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('input[name="fileSelect"]');
+            checkboxes.forEach(function(checkbox) {
+                checkbox.checked = selectAllCheckbox.checked;
+                updateSelection(checkbox.value, checkbox.checked);
+            });
+        });
+    }
+    
+    // Dosya listesini yükle
+    console.log('🔄 loadFileList çağrılıyor...');
+    loadFileList();
+});
+
+// Utility functions
+function formatNumber(number) {
+    if (typeof number !== 'number') return '0';
+    return number.toLocaleString('tr-TR');
+}
+
+function formatFileSize(bytes) {
+    if (typeof bytes !== 'number') return '0 B';
+    
+    if (bytes === 0) return '0 B';
+    
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'Bilinmiyor';
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('tr-TR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (error) {
+        return 'Geçersiz tarih';
+    }
+}
+
+function showAlert(type, message) {
+    // Bootstrap alert oluştur
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Sayfanın üstüne ekle
+    const container = document.querySelector('.container-fluid') || document.body;
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // 5 saniye sonra otomatik kapat
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+console.log('🎯 JavaScript dosyası tamamen yüklendi');
+</script>
+{% endblock %} 

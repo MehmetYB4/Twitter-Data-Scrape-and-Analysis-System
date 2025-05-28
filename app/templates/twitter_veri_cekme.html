@@ -1,0 +1,501 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+    .twitter-card {
+        border: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .twitter-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+    
+    .progress-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        background: conic-gradient(from 0deg, #1da1f2 0%, #1da1f2 0%, #e9ecef 0%);
+        position: relative;
+    }
+    
+    .progress-circle::before {
+        content: '';
+        position: absolute;
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        background: white;
+    }
+    
+    .progress-text {
+        position: relative;
+        z-index: 1;
+        font-weight: bold;
+        color: #1da1f2;
+    }
+    
+    .file-item {
+        border-left: 4px solid #1da1f2;
+        transition: background-color 0.2s;
+    }
+    
+    .file-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .status-badge {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+    
+    .twitter-icon {
+        color: #1da1f2;
+    }
+    
+    .form-control:focus {
+        border-color: #1da1f2;
+        box-shadow: 0 0 0 0.2rem rgba(29, 161, 242, 0.25);
+    }
+    
+    .btn-twitter {
+        background-color: #1da1f2;
+        border-color: #1da1f2;
+        color: white;
+    }
+    
+    .btn-twitter:hover {
+        background-color: #0d8bd9;
+        border-color: #0d8bd9;
+        color: white;
+    }
+    
+    .bg-twitter {
+        background-color: #1da1f2 !important;
+    }
+    
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        z-index: 9999;
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .loading-content {
+        background: white;
+        padding: 3rem;
+        border-radius: 1rem;
+        text-align: center;
+        max-width: 500px;
+        width: 90%;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Twitter Veri Çekme</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Sol Panel - Form ve Ayarlar -->
+    <div class="col-lg-6">
+        <div class="card twitter-card h-100">
+            <div class="card-header bg-twitter text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-twitter twitter-icon"></i>
+                    Twitter Veri Çekme
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="twitterForm">
+                    <div class="mb-4">
+                        <label for="username" class="form-label">
+                            <i class="bi bi-person-circle me-2"></i>Twitter Kullanıcı Adı
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">@</span>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   placeholder="örneğin: varank" required>
+                        </div>
+                        <small class="form-text text-muted">
+                            @ işareti olmadan sadece kullanıcı adını girin
+                        </small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="tweet_count" class="form-label">
+                            <i class="bi bi-list-ol me-2"></i>Tweet Sayısı
+                        </label>
+                        <input type="number" class="form-control" id="tweet_count" name="tweet_count" 
+                               value="100" min="1" max="5000" required>
+                        <small class="form-text text-muted">
+                            1-5000 arasında bir değer girin. Daha fazla tweet daha uzun sürer.
+                        </small>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-twitter btn-lg" id="startBtn">
+                            <i class="bi bi-download me-2"></i>
+                            Veri Çekmeyi Başlat
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- İşlem Durumu -->
+                <div id="statusContainer" class="mt-4" style="display: none;">
+                    <div class="alert alert-info">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border spinner-border-sm me-3" role="status">
+                                <span class="visually-hidden">Yükleniyor...</span>
+                            </div>
+                            <div>
+                                <strong>İşlem Devam Ediyor</strong>
+                                <div class="mt-1">
+                                    <small id="statusMessage">İşlem başlatılıyor...</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="progress mt-3" style="height: 8px;">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: 0%" id="progressBar"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-2">
+                            <small class="text-muted">İlerleme: <span id="progressText">0%</span></small>
+                            <small class="text-muted">Tweetler: <span id="tweetProgress">0/0</span></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sağ Panel - Dosyalar -->
+    <div class="col-lg-6">
+        <div class="card twitter-card h-100">
+            <div class="card-header bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-files me-2"></i>
+                        Çekilen Dosyalar
+                    </h5>
+                    <button class="btn btn-outline-primary btn-sm" id="refreshFiles">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div id="filesContainer">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Dosyalar yükleniyor...</span>
+                        </div>
+                        <div class="mt-2">Dosyalar yükleniyor...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Başarı Modal -->
+<div class="modal fade" id="successModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-check-circle me-2"></i>
+                    İşlem Başarılı!
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-3">
+                    <i class="bi bi-download text-success" style="font-size: 3rem;"></i>
+                </div>
+                <h6 id="successTitle">Tweetler başarıyla indirildi!</h6>
+                <p class="text-muted mb-0" id="successMessage"></p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-success" data-bs-dismiss="modal">
+                    <i class="bi bi-check me-2"></i>Tamam
+                </button>
+                <a href="/veri-secimi" class="btn btn-outline-primary">
+                    <i class="bi bi-arrow-right me-2"></i>Analiz Et
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hata Modal -->
+<div class="modal fade" id="errorModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Hata Oluştu
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <strong>Aşağıdaki hata oluştu:</strong>
+                    <div class="mt-2" id="errorMessage"></div>
+                </div>
+                <div class="text-muted">
+                    <small>
+                        <strong>Olası çözümler:</strong>
+                        <ul>
+                            <li><strong>Kimlik doğrulama hatası:</strong> Twitter oturumu süresi dolmuş olabilir. Birkaç dakika bekleyip tekrar deneyin.</li>
+                            <li><strong>Rate limit hatası:</strong> Twitter API limiti aşıldı. 15 dakika bekleyip tekrar deneyin.</li>
+                            <li><strong>Kullanıcı bulunamadı:</strong> Kullanıcı adının doğru yazıldığından ve hesabın açık olduğundan emin olun.</li>
+                            <li><strong>Bağlantı hatası:</strong> İnternet bağlantınızı kontrol edin.</li>
+                            <li>Sorun devam ederse sayfayı yenileyip tekrar deneyin.</li>
+                        </ul>
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                <button type="button" class="btn btn-primary" onclick="location.reload()">Tekrar Dene</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('twitterForm');
+    const startBtn = document.getElementById('startBtn');
+    const statusContainer = document.getElementById('statusContainer');
+    const statusMessage = document.getElementById('statusMessage');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const tweetProgress = document.getElementById('tweetProgress');
+    const refreshBtn = document.getElementById('refreshFiles');
+    
+    let statusInterval;
+    let isProcessing = false;
+    
+    // Sayfa yüklendiğinde dosyaları getir
+    loadFiles();
+    
+    // Form gönderme
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (isProcessing) {
+            showError('Zaten bir işlem devam ediyor!');
+            return;
+        }
+        
+        const formData = new FormData(form);
+        const data = {
+            username: formData.get('username').trim(),
+            tweet_count: parseInt(formData.get('tweet_count'))
+        };
+        
+        // Validation
+        if (!data.username) {
+            showError('Kullanıcı adı boş olamaz!');
+            return;
+        }
+        
+        if (data.tweet_count < 1 || data.tweet_count > 5000) {
+            showError('Tweet sayısı 1-5000 arasında olmalıdır!');
+            return;
+        }
+        
+        startFetching(data);
+    });
+    
+    // Dosyaları yenile
+    refreshBtn.addEventListener('click', loadFiles);
+    
+    function startFetching(data) {
+        isProcessing = true;
+        startBtn.disabled = true;
+        startBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>İşlem Başlatılıyor...';
+        
+        fetch('/twitter-veri-cekme/basla', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                statusContainer.style.display = 'block';
+                startStatusTracking();
+            } else {
+                showError(result.message);
+                resetForm();
+            }
+        })
+        .catch(error => {
+            showError('Bağlantı hatası: ' + error.message);
+            resetForm();
+        });
+    }
+    
+    function startStatusTracking() {
+        statusInterval = setInterval(checkStatus, 1000);
+    }
+    
+    function checkStatus() {
+        fetch('/twitter-veri-cekme/durum')
+        .then(response => response.json())
+        .then(status => {
+            updateStatus(status);
+            
+            if (!status.is_active) {
+                clearInterval(statusInterval);
+                
+                if (status.filename) {
+                    showSuccess(status.message, status.filename);
+                    loadFiles(); // Dosya listesini yenile
+                } else {
+                    showError(status.message);
+                }
+                
+                resetForm();
+            }
+        })
+        .catch(error => {
+            clearInterval(statusInterval);
+            showError('Durum kontrol hatası: ' + error.message);
+            resetForm();
+        });
+    }
+    
+    function updateStatus(status) {
+        statusMessage.textContent = status.message;
+        progressBar.style.width = status.progress + '%';
+        progressText.textContent = status.progress + '%';
+        tweetProgress.textContent = status.current_tweets + '/' + status.total_tweets;
+    }
+    
+    function resetForm() {
+        isProcessing = false;
+        startBtn.disabled = false;
+        startBtn.innerHTML = '<i class="bi bi-download me-2"></i>Veri Çekmeyi Başlat';
+        statusContainer.style.display = 'none';
+    }
+    
+    function loadFiles() {
+        const container = document.getElementById('filesContainer');
+        
+        fetch('/twitter-veri-cekme/dosyalar')
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                displayFiles(result.dosyalar);
+            } else {
+                container.innerHTML = `
+                    <div class="text-center py-4 text-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <div class="mt-2">${result.message}</div>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            container.innerHTML = `
+                <div class="text-center py-4 text-danger">
+                    <i class="bi bi-wifi-off"></i>
+                    <div class="mt-2">Dosyalar yüklenemedi</div>
+                </div>
+            `;
+        });
+    }
+    
+    function displayFiles(files) {
+        const container = document.getElementById('filesContainer');
+        
+        if (files.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-5 text-muted">
+                    <i class="bi bi-folder-x" style="font-size: 3rem;"></i>
+                    <div class="mt-3">Henüz hiç dosya yok</div>
+                    <small>Twitter'dan veri çekerek başlayın</small>
+                </div>
+            `;
+            return;
+        }
+        
+        const filesHtml = files.map(file => `
+            <div class="file-item p-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">
+                            <i class="bi bi-file-earmark-text twitter-icon me-2"></i>
+                            @${file.username}
+                        </h6>
+                        <div class="text-muted small mb-2">
+                            <div><i class="bi bi-calendar me-1"></i>${file.tarih}</div>
+                            <div><i class="bi bi-bar-chart me-1"></i>${file.tweet_sayisi} tweet</div>
+                            <div><i class="bi bi-hdd me-1"></i>${file.boyut}</div>
+                        </div>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-primary dropdown-toggle" 
+                                data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="/veri-secimi">
+                                    <i class="bi bi-graph-up me-2"></i>Analiz Et
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/tweet_arsivleri/${file.isim}" download>
+                                    <i class="bi bi-download me-2"></i>İndir
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        container.innerHTML = filesHtml;
+    }
+    
+    function showSuccess(message, filename) {
+        document.getElementById('successMessage').textContent = 
+            `Dosya adı: ${filename}`;
+        const modal = new bootstrap.Modal(document.getElementById('successModal'));
+        modal.show();
+    }
+    
+    function showError(message) {
+        document.getElementById('errorMessage').textContent = message;
+        const modal = new bootstrap.Modal(document.getElementById('errorModal'));
+        modal.show();
+    }
+});
+</script>
+{% endblock %} 

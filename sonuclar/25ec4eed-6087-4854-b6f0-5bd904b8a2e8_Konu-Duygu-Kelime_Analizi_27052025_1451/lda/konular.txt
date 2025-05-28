@@ -1,0 +1,2 @@
+Konu 0: 0.020*"RT" + 0.009*"bir" + 0.009*"@gundem7x24:" + 0.008*"ve" + 0.008*"Genel" + 0.008*"CHP" + 0.006*"Ahmet" + 0.006*"olsun" + 0.006*"Başkanı" + 0.006*"geçmiş"
+Konu 1: 0.020*"RT" + 0.019*"ve" + 0.007*"bir" + 0.007*"önce" + 0.005*"@RTErdogan:" + 0.005*"the" + 0.004*"CHP" + 0.004*"Cumhurbaşkanı" + 0.004*"imza" + 0.004*"kişi"
