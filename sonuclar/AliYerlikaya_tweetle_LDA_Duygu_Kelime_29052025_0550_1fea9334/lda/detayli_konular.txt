@@ -1,0 +1,57 @@
+DETAYLI KONU ANALİZİ
+==================================================
+
+KONU 1:
+--------------------
+0.037*"ali" + 0.035*"yerlikaya" + 0.018*"@aliyerlikaya" + 0.013*"bir" + 0.009*"emniyet" + 0.008*"genel" + 0.007*"sayın" + 0.007*"trafik" + 0.005*"göçmen" + 0.005*"müdürlüğü"
+
+En önemli kelimeler:
+  • ali: 0.0373
+  • yerlikaya: 0.0355
+  • @aliyerlikaya: 0.0177
+  • bir: 0.0128
+  • emniyet: 0.0087
+  • genel: 0.0080
+  • sayın: 0.0074
+  • trafik: 0.0074
+  • göçmen: 0.0050
+  • müdürlüğü: 0.0049
+
+==================================================
+
+KONU 2:
+--------------------
+0.021*"yönelik" + 0.020*"şüpheli" + 0.012*"bin" + 0.010*"ilde" + 0.010*"yakalandı" + 0.009*"düzenlediğimiz" + 0.009*"tarafından" + 0.009*"suç" + 0.008*"uyuşturucu" + 0.007*"devam"
+
+En önemli kelimeler:
+  • yönelik: 0.0207
+  • şüpheli: 0.0203
+  • bin: 0.0116
+  • ilde: 0.0104
+  • yakalandı: 0.0095
+  • düzenlediğimiz: 0.0093
+  • tarafından: 0.0090
+  • suç: 0.0088
+  • uyuşturucu: 0.0084
+  • devam: 0.0075
+
+==================================================
+
+KONU 3:
+--------------------
+0.023*"sayın" + 0.021*"bir" + 0.011*"cumhurbaşkanımız" + 0.010*"@rterdogan" + 0.009*"için" + 0.008*"#canlıyayın" + 0.007*"büyük" + 0.006*"parti" + 0.006*"ile" + 0.005*"milletimizin"
+
+En önemli kelimeler:
+  • sayın: 0.0233
+  • bir: 0.0208
+  • cumhurbaşkanımız: 0.0108
+  • @rterdogan: 0.0101
+  • için: 0.0088
+  • #canlıyayın: 0.0084
+  • büyük: 0.0069
+  • parti: 0.0062
+  • ile: 0.0061
+  • milletimizin: 0.0054
+
+==================================================
+

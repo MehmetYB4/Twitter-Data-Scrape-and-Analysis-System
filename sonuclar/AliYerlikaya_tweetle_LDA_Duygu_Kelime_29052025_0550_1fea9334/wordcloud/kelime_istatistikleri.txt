@@ -1,0 +1,60 @@
+KELIME İSTATİSTİKLERİ
+==================================================
+
+Toplam metin sayısı: 792
+Toplam benzersiz kelime: 4620
+Toplam kelime kullanımı: 17108
+Ortalama kelime uzunluğu: 8.4
+
+EN SIK KULLANILAN 50 KELİME:
+------------------------------
+ 1. ali            :  221 kez
+ 2. yerlikaya      :  210 kez
+ 3. sayın          :  207 kez
+ 4. yönelik        :  150 kez
+ 5. şüpheli        :  134 kez
+ 6. yakalandı      :  118 kez
+ 7. aliyerlikaya   :  109 kez
+ 8. cumhurbaşkanımız:  102 kez
+ 9. rterdogan      :   96 kez
+10. bin            :   90 kez
+11. trafik         :   86 kez
+12. terör          :   78 kez
+13. tarafından     :   76 kez
+14. operasyonlarda :   76 kez
+15. emniyet        :   71 kez
+16. ilde           :   69 kez
+17. milletimizin   :   67 kez
+18. suç            :   64 kez
+19. devam          :   63 kez
+20. uyuşturucu     :   63 kez
+21. genel          :   60 kez
+22. düzenlediğimiz :   58 kez
+23. canlıyayın     :   57 kez
+24. düzenlenen     :   57 kez
+25. jandarma       :   54 kez
+26. örgütü         :   53 kez
+27. ilgili         :   50 kez
+28. adet           :   50 kez
+29. olsun          :   50 kez
+30. i̇stanbul      :   49 kez
+31. organize       :   48 kez
+32. ele            :   48 kez
+33. büyük          :   48 kez
+34. türkiye        :   46 kez
+35. i̇l            :   45 kez
+36. eden           :   44 kez
+37. dışı           :   44 kez
+38. madde          :   44 kez
+39. örgütüne       :   43 kez
+40. yaptığı        :   42 kez
+41. son            :   41 kez
+42. parti          :   40 kez
+43. meydana        :   40 kez
+44. ayrı           :   39 kez
+45. polis          :   39 kez
+46. ’ın            :   38 kez
+47. yurt           :   38 kez
+48. müdürlüğü      :   38 kez
+49. operasyonlarında:   36 kez
+50. elebaşılığını  :   35 kez

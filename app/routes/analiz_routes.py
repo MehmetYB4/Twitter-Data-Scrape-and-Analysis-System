@@ -112,7 +112,7 @@ def demo_analiz_ekle():
                             'lda_konu_sayisi': 5,
                             'batch_size': 16,
                             'baslangic_tarihi': baslangic_tarihi,
-                            'analysis_name': f'Analiz {analiz_id[:8]}',
+                            'analysis_name': _extract_dataset_name_from_folder(analiz_id),  # Klasör adından proje ismini çıkar
                             'tweet_sayisi': tweet_sayisi
                         },
                         'durum': 'tamamlandı',
@@ -276,7 +276,8 @@ def analiz_hizli_calistir(analiz_params, app=None):
                            metin_kolonu='temiz_metin', 
                            cikti_klasoru=str(lda_klasoru),
                            num_topics=analiz_params.get('lda_konu_sayisi', 8),
-                           iterations=min(analiz_params.get('lda_iterations', 100), 50))  # Max 50 iteration
+                           iterations=min(analiz_params.get('lda_iterations', 100), 50),  # Max 50 iteration
+                           optimize_topics=False)  # Kullanıcının seçtiği konu sayısını kullan
                 
                 lda_time = time.time() - lda_start
                 print(f"✅ LDA tamamlandı: {lda_time:.2f}s")
@@ -751,17 +752,19 @@ def analiz_zip_indir(analiz_id):
         import os
         from flask import send_file
         
-        # Analiz ID'si ile başlayan klasörü bul
+        # Analiz ID'si ile eşleşen klasörü bul (tam eşleşme veya içerme)
         sonuclar_klasoru = current_app.config['SONUCLAR_FOLDER']
         analiz_klasoru = None
         
         for klasor in sonuclar_klasoru.iterdir():
-            if klasor.is_dir() and klasor.name.startswith(analiz_id):
-                analiz_klasoru = klasor
-                break
+            if klasor.is_dir():
+                # Analiz ID'si klasör adında varsa 
+                if analiz_id in klasor.name or klasor.name.startswith(analiz_id):
+                    analiz_klasoru = klasor
+                    break
         
         if not analiz_klasoru:
-            return jsonify({'success': False, 'error': 'Analiz bulunamadı'}), 404
+            return jsonify({'success': False, 'error': 'Analiz klasörü bulunamadı'}), 404
         
         # ZIP dosyası oluştur
         zip_buffer = io.BytesIO()
@@ -777,14 +780,19 @@ def analiz_zip_indir(analiz_id):
         
         zip_buffer.seek(0)
         
+        # Dosya adını klasör adından oluştur
+        analiz_adi = _extract_dataset_name_from_folder(analiz_klasoru.name)
+        dosya_adi = f'{analiz_adi}_analiz_sonuclari.zip'
+        
         return send_file(
             zip_buffer,
             as_attachment=True,
-            download_name=f'analiz_{analiz_id[:8]}.zip',
+            download_name=dosya_adi,
             mimetype='application/zip'
         )
         
     except Exception as e:
+        print(f"❌ ZIP indirme hatası: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @analiz_bp.route('/pdf-rapor/<analiz_id>', methods=['POST'])
@@ -910,8 +918,15 @@ def analiz_pdf_rapor(analiz_id):
                     stats['lda_konu_sayisi'] = len(stats['lda_detaylari'])
                     print(f"✅ LDA detayları yüklendi: {stats['lda_konu_sayisi']} konu")
                     
+                else:
+                    # Eğer detaylı konular dosyası yoksa parametrelerden al
+                    stats['lda_konu_sayisi'] = analiz_info.get('params', {}).get('lda_konu_sayisi', 2)
+                    print(f"⚠️ LDA detaylı konular dosyası bulunamadı, parametreden alınan konu sayısı: {stats['lda_konu_sayisi']}")
+                    
             except Exception as e:
                 print(f"❌ LDA istatistikleri okunurken hata: {e}")
+                # Hata durumunda da parametrelerden al
+                stats['lda_konu_sayisi'] = analiz_info.get('params', {}).get('lda_konu_sayisi', 2)
 
         # 3. Sentiment Detayları
         sentiment_klasor = analiz_klasor_yolu / 'sentiment'
@@ -1011,7 +1026,91 @@ def analiz_pdf_rapor(analiz_id):
         
         print(f"📊 İstatistik özeti: {stats['tweet_sayisi']} tweet, {stats['lda_konu_sayisi']} konu, pozitif: {stats['pozitif_oran']}")
         
-        return jsonify({"success": True, "stats": stats})
+        # PDF oluştur
+        pdf_buffer = io.BytesIO()
+        
+        # Dataset adı
+        dataset_name = _extract_dataset_name_from_folder(analiz_klasor_yolu.name)
+        
+        # PDF belgesi oluştur
+        doc = SimpleDocTemplate(pdf_buffer, pagesize=A4)
+        styles = getSampleStyleSheet()
+        
+        # Özel stiller
+        title_style = ParagraphStyle(
+            'TitleStyle',
+            parent=styles['Title'],
+            fontSize=20,
+            spaceAfter=20,
+            textColor=Color(0.2, 0.2, 0.8)
+        )
+        
+        heading_style = ParagraphStyle(
+            'HeadingStyle',
+            parent=styles['Heading1'],
+            fontSize=14,
+            spaceAfter=12,
+            textColor=Color(0.1, 0.1, 0.6)
+        )
+        
+        content = []
+        
+        # Başlık
+        content.append(Paragraph(f"{dataset_name} - Twitter Analiz Raporu", title_style))
+        content.append(Spacer(1, 12))
+        
+        # Genel bilgiler
+        content.append(Paragraph("Analiz Özeti", heading_style))
+        content.append(Paragraph(f"• Toplam Tweet Sayısı: {stats['tweet_sayisi']}", styles['Normal']))
+        content.append(Paragraph(f"• LDA Konu Sayısı: {stats['lda_konu_sayisi']}", styles['Normal']))
+        content.append(Paragraph(f"• Pozitif Oran: {stats['pozitif_oran']}", styles['Normal']))
+        content.append(Paragraph(f"• En Sık Kelime: {stats['en_sik_kelime']}", styles['Normal']))
+        content.append(Spacer(1, 20))
+        
+        # LDA Detayları
+        if stats['lda_detaylari']:
+            content.append(Paragraph("LDA Konu Analizi", heading_style))
+            for konu in stats['lda_detaylari']:
+                content.append(Paragraph(f"<b>{konu['konu_adi']}</b> (%{konu['yuzde']})", styles['Normal']))
+                kelimeler = ", ".join(konu['anahtar_kelimeler'][:5])
+                content.append(Paragraph(f"Anahtar kelimeler: {kelimeler}", styles['Normal']))
+                content.append(Spacer(1, 8))
+            content.append(Spacer(1, 20))
+        
+        # Sentiment Detayları
+        if stats['sentiment_detaylari']:
+            content.append(Paragraph("Duygu Analizi", heading_style))
+            sent = stats['sentiment_detaylari']
+            content.append(Paragraph(f"• Pozitif: {sent['pozitif']['sayi']} tweet (%{sent['pozitif']['yuzde']})", styles['Normal']))
+            content.append(Paragraph(f"• Negatif: {sent['negatif']['sayi']} tweet (%{sent['negatif']['yuzde']})", styles['Normal']))
+            content.append(Paragraph(f"• Nötr: {sent['notr']['sayi']} tweet (%{sent['notr']['yuzde']})", styles['Normal']))
+            content.append(Spacer(1, 20))
+        
+        # Kelime Analizi
+        if stats['wordcloud_detaylari']:
+            content.append(Paragraph("En Sık Kullanılan Kelimeler", heading_style))
+            for i, kelime_data in enumerate(stats['wordcloud_detaylari'][:10], 1):
+                content.append(Paragraph(f"{i}. {kelime_data['kelime']}: {kelime_data['frekans']} kez", styles['Normal']))
+            content.append(Spacer(1, 20))
+        
+        # Sonuç
+        content.append(Paragraph("Analiz Sonuçları", heading_style))
+        content.append(Paragraph(_generate_ai_general_comment(dataset_name, analiz_info.get('params', {})), styles['Normal']))
+        
+        # PDF'i oluştur
+        doc.build(content)
+        pdf_buffer.seek(0)
+        
+        # Dosya adı
+        tarih = datetime.now().strftime('%Y%m%d_%H%M')
+        dosya_adi = f"{dataset_name.replace(' ', '_')}_Twitter_Analiz_Raporu_{tarih}.pdf"
+        
+        return send_file(
+            pdf_buffer,
+            as_attachment=True,
+            download_name=dosya_adi,
+            mimetype='application/pdf'
+        )
         
     except Exception as e:
         print(f"❌ PDF rapor hatası: {e}")
@@ -1022,25 +1121,58 @@ def analiz_pdf_rapor(analiz_id):
 def _extract_dataset_name_from_folder(folder_name):
     """Klasör adından dataset ismini çıkar"""
     try:
-        # Format örneği: kullanicisi_LDA_Duygu_Kelime_28052025_1629_2d14232d
+        # Format örnekleri:
+        # AliYerlikaya_tweetle_LDA_Duygu_Kelime_29052025_0532_cdea0bb3
+        # gidadedektifiTR_twee_LDA_Duygu_Kelime_28052025_2341_878021ce
+        # Konu-Duygu-Kelime_Analizi_29052025_0532
+        
+        # Önce '_' ile böl
         parts = folder_name.split('_')
         
-        # İlk parça dataset ismidir
         if len(parts) >= 1:
+            # İlk parça dataset ismidir
             dataset_name = parts[0]
             
-            # Eğer dataset ismi çok kısa veya sayısal ise default isim kullan
-            if len(dataset_name) < 3 or dataset_name.isdigit():
-                return "TwitterKullanicisi"
+            # UUID formatındaki klasörler için özel işlem
+            if len(dataset_name) > 20 and '-' in dataset_name:
+                # UUID formatı, ikinci parçayı al
+                if len(parts) >= 2:
+                    dataset_name = parts[1]
+                else:
+                    return "Twitter Analizi"
             
-            # Camel case'e çevir
-            dataset_name = dataset_name.capitalize()
-            return dataset_name
+            # Eğer dataset ismi çok kısa, sayısal veya UUID ise alternatif yöntemler
+            if len(dataset_name) < 3 or dataset_name.isdigit() or len(dataset_name.replace('-', '')) == 32:
+                # Klasör adından daha akıllı çıkarım
+                if 'Konu-Duygu-Kelime' in folder_name:
+                    return "Konu-Duygu-Kelime Analizi"
+                elif 'AliYerlikaya' in folder_name:
+                    return "Ali Yerlikaya Analizi"
+                elif 'gidadedektifi' in folder_name:
+                    return "Gıda Dedektifi Analizi"
+                elif 'varank' in folder_name:
+                    return "Varank Analizi"
+                else:
+                    return "Twitter Analizi"
             
-        return "TwitterKullanicisi"
+            # Özel isimleri düzelt
+            if dataset_name.lower() == 'aliyerlikaya':
+                return "Ali Yerlikaya Analizi"
+            elif dataset_name.lower() == 'gidadedektifitr':
+                return "Gıda Dedektifi Analizi"
+            elif dataset_name.lower() == 'varank':
+                return "Varank Analizi"
+            
+            # Camel case'e çevir veya düzelt
+            if dataset_name.islower():
+                dataset_name = dataset_name.capitalize()
+            
+            return f"{dataset_name} Analizi"
+            
+        return "Twitter Analizi"
     except Exception as e:
         print(f"⚠️ Dataset ismi çıkarma hatası: {e}")
-        return "TwitterKullanicisi"
+        return "Twitter Analizi"
 
 def _generate_ai_general_comment(dataset_name, params):
     """AI genel yorumu oluştur"""
@@ -1220,8 +1352,15 @@ def analiz_istatistikleri(analiz_id):
                     stats['lda_konu_sayisi'] = len(stats['lda_detaylari'])
                     print(f"✅ LDA detayları yüklendi: {stats['lda_konu_sayisi']} konu")
                     
+                else:
+                    # Eğer detaylı konular dosyası yoksa parametrelerden al
+                    stats['lda_konu_sayisi'] = analiz_verisi.get('params', {}).get('lda_konu_sayisi', 2)
+                    print(f"⚠️ LDA detaylı konular dosyası bulunamadı, parametreden alınan konu sayısı: {stats['lda_konu_sayisi']}")
+                    
             except Exception as e:
                 print(f"❌ LDA istatistikleri okunurken hata: {e}")
+                # Hata durumunda da parametrelerden al
+                stats['lda_konu_sayisi'] = analiz_verisi.get('params', {}).get('lda_konu_sayisi', 2)
 
         # 3. Sentiment Detayları
         sentiment_klasor = analiz_klasor_yolu / 'sentiment'
