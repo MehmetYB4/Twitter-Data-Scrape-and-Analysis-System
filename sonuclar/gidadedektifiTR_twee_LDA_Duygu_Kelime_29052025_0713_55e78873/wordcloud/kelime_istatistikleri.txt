@@ -1,0 +1,60 @@
+KELIME İSTATİSTİKLERİ
+==================================================
+
+Toplam metin sayısı: 114
+Toplam benzersiz kelime: 1065
+Toplam kelime kullanımı: 3101
+Ortalama kelime uzunluğu: 7.5
+
+EN SIK KULLANILAN 50 KELİME:
+------------------------------
+ 1. aroma          :   34 kez
+ 2. tarafından     :   33 kez
+ 3. ürün           :   30 kez
+ 4. gıda           :   30 kez
+ 5. yer            :   26 kez
+ 6. satışa         :   25 kez
+ 7. içeriğinde     :   23 kez
+ 8. oranında       :   23 kez
+ 9. httpsgidadedektificomstatus:   23 kez
+10. bulunuyor      :   22 kez
+11. markasıyla     :   20 kez
+12. sunulan        :   19 kez
+13. palm           :   18 kez
+14. yani           :   18 kez
+15. yağı           :   18 kez
+16. şeker          :   18 kez
+17. satılan        :   17 kez
+18. vericisi       :   16 kez
+19. içeriyor       :   16 kez
+20. alıyor         :   16 kez
+21. tctarim        :   16 kez
+22. inceleyeceğiz  :   15 kez
+23. üründe         :   15 kez
+24. süt            :   15 kez
+25. tarihi         :   15 kez
+26. yapay          :   14 kez
+27. orman          :   14 kez
+28. tespit         :   14 kez
+29. tek            :   14 kez
+30. tüketim        :   14 kez
+31. ayrıca         :   13 kez
+32. vericiler      :   13 kez
+33. dedektifi      :   13 kez
+34. son            :   13 kez
+35. katkı          :   12 kez
+36. tarım          :   12 kez
+37. edilen         :   12 kez
+38. cappy          :   12 kez
+39. içeriği        :   11 kez
+40. mobil          :   11 kez
+41. takip          :   11 kez
+42. maddeleri      :   10 kez
+43. çay            :   10 kez
+44. eti            :   10 kez
+45. bitkisel       :   10 kez
+46. küp            :   10 kez
+47. üretilerek     :    9 kez
+48. markalı        :    9 kez
+49. ithal          :    9 kez
+50. ilçesinde      :    9 kez

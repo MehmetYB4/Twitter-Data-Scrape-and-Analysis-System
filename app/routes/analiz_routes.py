@@ -512,8 +512,8 @@ def analiz_baslat():
                 analysis_name = f'Analiz {analiz_id}'
             elif len(veri_set_isimleri) == 1:
                 veri_set_str = veri_set_isimleri[0]
-                # Özel isim çevirileri
-                if veri_set_str == 'MMA101Turkiye':
+                # Özel isim çevirileri - doğrudan isimler
+                if veri_set_str == 'MMA101Turkiye' or veri_set_str == 'MMA101Türkiye':
                     analysis_name = "MMA101Türkiye Twitter Analizi"
                 elif veri_set_str == 'AliYerlikaya':
                     analysis_name = "Ali Yerlikaya Twitter Analizi"
@@ -1479,8 +1479,8 @@ def _extract_dataset_name_from_folder(folder_name):
             
             print(f"📝 Bulunan dataset ismi: '{dataset_name}'")
             
-            # Özel durum kontrolları
-            if dataset_name == 'MMA101Turkiye':
+            # Özel durum kontrolları - doğrudan isimler döndür
+            if dataset_name == 'MMA101Turkiye' or dataset_name == 'MMA101Türkiye':
                 return "MMA101Türkiye Twitter Analizi"
             elif dataset_name == 'AliYerlikaya':
                 return "Ali Yerlikaya Twitter Analizi"
@@ -1497,13 +1497,15 @@ def _extract_dataset_name_from_folder(folder_name):
             if len(dataset_name) > 2 and not dataset_name.isdigit():
                 # CamelCase veya snake_case'i düzelt
                 if dataset_name.isupper():
-                    dataset_name = dataset_name.capitalize()
+                    formatted_name = dataset_name.capitalize()
                 elif '_' in dataset_name:
-                    dataset_name = dataset_name.replace('_', ' ').title()
+                    formatted_name = dataset_name.replace('_', ' ').title()
                 elif not dataset_name[0].isupper():
-                    dataset_name = dataset_name.capitalize()
+                    formatted_name = dataset_name.capitalize()
+                else:
+                    formatted_name = dataset_name
                 
-                return f"{dataset_name} Twitter Analizi"
+                return f"{formatted_name} Twitter Analizi"
             
         # Fallback: Klasör adından akıllı çıkarım
         if 'MMA101' in folder_name:

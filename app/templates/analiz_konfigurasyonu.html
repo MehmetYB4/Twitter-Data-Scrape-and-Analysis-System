@@ -788,7 +788,8 @@ function startAnalysis() {
             
             // Analiz ID'sini doğru şekilde al
             const analizId = data.data?.analiz_id || data.analiz_id;
-            console.log('🔍 Analiz ID:', analizId);
+            const analizDurum = data.data?.durum || 'başlatıldı';
+            console.log('🔍 Analiz ID:', analizId, 'Durum:', analizDurum);
             
             if (!analizId) {
                 console.error('❌ Analiz ID bulunamadı:', data);
@@ -800,8 +801,20 @@ function startAnalysis() {
                 return;
             }
             
-            // Progress tracking başlat
-            startProgressTracking(analizId);
+            // Hızlı analiz tamamlandıysa direkt yönlendir
+            if (analizDurum === 'tamamlandı') {
+                console.log('⚡ Hızlı analiz tamamlandı, direkt sonuca yönlendiriliyor...');
+                showAnalysisCompleted();
+                
+                // 2 saniye sonra sonuç sayfasına yönlendir
+                setTimeout(() => {
+                    window.location.href = `/sonuclar/${analizId}`;
+                }, 2000);
+            } else {
+                // Normal analiz için progress tracking başlat
+                console.log('🔄 Normal analiz başlatıldı, progress tracking başlıyor...');
+                startProgressTracking(analizId);
+            }
             
         } else {
             console.error('❌ Analiz başlatma hatası:', data.error);
@@ -817,6 +830,19 @@ function startAnalysis() {
 }
 
 function showProgressModal(analysisName, analysisTypes, tweetCount) {
+    // Hızlı analiz kontrolü
+    const isQuickAnalysis = tweetCount <= 100;
+    const modalTitle = isQuickAnalysis ? 'Hızlı Analiz İşlemi' : 'Analiz İşlemi Devam Ediyor';
+    const analysisInfo = isQuickAnalysis ? 
+        `<p class="mb-3 text-success">
+            <i class="bi bi-lightning text-warning"></i>
+            Hızlı analiz modu aktif - ${tweetCount} tweet
+        </p>` :
+        `<p class="mb-1">
+            <i class="bi bi-file-text text-info"></i>
+            ${tweetCount.toLocaleString('tr-TR')} Tweet işleniyor
+        </p>`;
+    
     // Modal HTML'i oluştur
     const modalHtml = `
         <div class="modal fade" id="progressModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
@@ -825,16 +851,13 @@ function showProgressModal(analysisName, analysisTypes, tweetCount) {
                     <div class="modal-header border-0">
                         <h5 class="modal-title">
                             <i class="bi bi-cpu text-primary"></i>
-                            Analiz İşlemi Devam Ediyor
+                            ${modalTitle}
                         </h5>
                     </div>
                     <div class="modal-body">
                         <div class="text-center mb-4">
                             <h6 class="text-muted">${analysisName}</h6>
-                            <p class="mb-1">
-                                <i class="bi bi-file-text text-info"></i>
-                                ${tweetCount.toLocaleString('tr-TR')} Tweet işleniyor
-                            </p>
+                            ${analysisInfo}
                             <p class="mb-3">
                                 <i class="bi bi-gear text-secondary"></i>
                                 ${analysisTypes.map(t => t.toUpperCase()).join(', ')} analizleri
@@ -857,7 +880,7 @@ function showProgressModal(analysisName, analysisTypes, tweetCount) {
                             <p id="progressStatus" class="text-muted mb-2">Analiz başlatılıyor...</p>
                             <small class="text-muted">
                                 <i class="bi bi-clock"></i>
-                                Tahmini süre: <span id="estimatedTime">1-3 dakika</span>
+                                Tahmini süre: <span id="estimatedTime">${isQuickAnalysis ? '10-30 saniye' : '1-3 dakika'}</span>
                             </small>
                         </div>
                         
