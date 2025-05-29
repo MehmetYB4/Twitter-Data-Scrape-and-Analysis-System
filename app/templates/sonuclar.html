@@ -250,7 +250,10 @@ function showAlert(type, message, duration = 5000) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Sonuçlar sayfası yüklendi - DOM hazır');
+    
     // Load results
+    console.log('📋 loadResults() çağrılıyor...');
     loadResults();
     
     // Setup filters
@@ -268,35 +271,61 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function loadResults() {
-    console.log('📊 Analiz sonuçları yükleniyor...');
+    console.log('📊 loadResults başlatıldı - API çağrısı yapılıyor...');
+    
+    // Loading state'i göster
+    const loadingState = document.getElementById('loadingState');
+    const emptyState = document.getElementById('emptyState');
+    if (loadingState) {
+        loadingState.style.display = 'block';
+        console.log('🔄 Loading state gösteriliyor');
+    }
+    if (emptyState) {
+        emptyState.style.display = 'none';
+    }
     
     // Gerçek API'den analiz listesini çek
     fetch('/analiz/liste')
         .then(response => {
             console.log('📡 API Response Status:', response.status);
+            console.log('📡 API Response OK:', response.ok);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
             return response.json();
         })
         .then(data => {
-            console.log('📦 API Response Data:', data);
+            console.log('📦 API Response Data (raw):', data);
+            console.log('📦 Data success:', data.success);
+            console.log('📦 Data total:', data.total);
+            console.log('📦 Data length:', data.data ? data.data.length : 'data.data yok');
+            
             if (data.success) {
-                allResults = data.data.map(analiz => ({
-                    id: analiz.id,
-                    name: analiz.name,
-                    status: mapStatusToTurkish(analiz.status),
-                    types: analiz.types || [],
-                    startDate: analiz.startDate,
-                    endDate: analiz.endDate,
-                    tweetCount: analiz.tweetCount || 0,
-                    progress: analiz.progress || 0,
-                    error: analiz.error,
-                    fileCount: analiz.fileCount || 1
-                }));
+                console.log('✅ API başarılı - veri işleniyor...');
                 
-                console.log('✅ Yüklenen analiz sayısı:', allResults.length);
+                allResults = data.data.map(analiz => {
+                    console.log('🔄 İşlenen analiz:', analiz.name, '- Status:', analiz.status);
+                    return {
+                        id: analiz.id,
+                        name: analiz.name,
+                        status: mapStatusToTurkish(analiz.status),
+                        types: analiz.types || [],
+                        startDate: analiz.startDate,
+                        endDate: analiz.endDate,
+                        tweetCount: analiz.tweetCount || 0,
+                        progress: analiz.progress || 0,
+                        error: analiz.error,
+                        fileCount: analiz.fileCount || 1
+                    };
+                });
+                
+                console.log('✅ Toplam yüklenen analiz sayısı:', allResults.length);
+                console.log('📋 allResults:', allResults);
+                
                 applyFilters();
                 updateStatistics();
             } else {
-                console.error('❌ API Error:', data.error);
+                console.error('❌ API Success=false, Error:', data.error);
                 showAlert('danger', 'Analiz sonuçları yüklenirken hata oluştu: ' + data.error);
                 
                 // Hata durumunda boş liste göster
@@ -306,7 +335,8 @@ function loadResults() {
             }
         })
         .catch(error => {
-            console.error('💥 Analiz sonuçları yüklenirken hata:', error);
+            console.error('💥 Fetch hatası:', error);
+            console.error('💥 Error message:', error.message);
             showAlert('danger', 'Analiz sonuçları yüklenirken hata oluştu: ' + error.message);
             
             // Hata durumunda boş liste göster
@@ -343,9 +373,14 @@ function setupFilters() {
 }
 
 function applyFilters() {
+    console.log('🔍 applyFilters başlatıldı');
+    console.log('🔍 allResults uzunluğu:', allResults.length);
+    
     const statusFilter = document.getElementById('filterStatus').value;
     const typeFilter = document.getElementById('filterType').value;
     const searchFilter = document.getElementById('searchQuery').value.toLowerCase();
+    
+    console.log('🔍 Filtreler - Status:', statusFilter, 'Type:', typeFilter, 'Search:', searchFilter);
     
     filteredResults = allResults.filter(result => {
         // Status filter
@@ -360,36 +395,65 @@ function applyFilters() {
         return true;
     });
     
+    console.log('✅ Filtrelenmiş sonuç sayısı:', filteredResults.length);
+    console.log('📋 filteredResults:', filteredResults);
+    
     displayResults();
 }
 
 function displayResults() {
+    console.log('🖼️ displayResults başlatıldı');
+    console.log('🖼️ Görüntülenecek sonuç sayısı:', filteredResults.length);
+    
     const container = document.getElementById('resultsContainer');
     const loadingState = document.getElementById('loadingState');
     const emptyState = document.getElementById('emptyState');
     
+    console.log('🖼️ Container element:', container ? 'Bulundu' : 'Bulunamadı');
+    console.log('🖼️ Loading state element:', loadingState ? 'Bulundu' : 'Bulunamadı');
+    console.log('🖼️ Empty state element:', emptyState ? 'Bulundu' : 'Bulunamadı');
+    
     // Hide loading state
-    loadingState.style.display = 'none';
+    if (loadingState) {
+        loadingState.style.display = 'none';
+        console.log('🖼️ Loading state gizlendi');
+    }
     
     if (filteredResults.length === 0) {
-        emptyState.style.display = 'block';
+        console.log('⚠️ Hiç sonuç yok - empty state gösteriliyor');
+        if (emptyState) {
+            emptyState.style.display = 'block';
+        }
         // Clear any existing cards
         const existingCards = container.querySelectorAll('.result-card');
         existingCards.forEach(card => card.remove());
+        console.log('🧹 Mevcut kartlar temizlendi');
         return;
     }
     
-    emptyState.style.display = 'none';
+    console.log('✅ Sonuçlar var - kartlar oluşturuluyor');
+    if (emptyState) {
+        emptyState.style.display = 'none';
+    }
     
     // Clear existing cards
     const existingCards = container.querySelectorAll('.result-card');
+    console.log('🧹 Temizlenecek mevcut kart sayısı:', existingCards.length);
     existingCards.forEach(card => card.remove());
     
     // Create cards for each result
-    filteredResults.forEach(result => {
+    filteredResults.forEach((result, index) => {
+        console.log(`🃏 Kart ${index + 1} oluşturuluyor:`, result.name);
         const card = createResultCard(result);
-        container.appendChild(card);
+        if (card && container) {
+            container.appendChild(card);
+            console.log(`✅ Kart ${index + 1} container'a eklendi`);
+        } else {
+            console.error(`❌ Kart ${index + 1} eklenemedi - card:`, card, 'container:', container);
+        }
     });
+    
+    console.log('✅ Tüm kartlar oluşturuldu ve eklendi');
 }
 
 function createResultCard(result) {

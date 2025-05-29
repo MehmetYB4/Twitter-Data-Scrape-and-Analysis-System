@@ -67,6 +67,13 @@ def sonuclar():
                          title='Analiz Sonuçları',
                          page='sonuclar')
 
+@main_bp.route('/test-sonuclar')
+def test_sonuclar():
+    """Test sonuçlar sayfası"""
+    return render_template('test_sonuclar.html',
+                         title='Test Analiz Sonuçları',
+                         page='test-sonuclar')
+
 @main_bp.route('/sonuclar/<analiz_id>')
 def sonuc_detay(analiz_id):
     """Belirli bir analizin detay sayfası"""

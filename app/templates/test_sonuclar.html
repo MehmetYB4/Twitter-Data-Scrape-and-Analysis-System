@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Sonuçlar</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .card { border: 1px solid #ccc; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .loading { color: #666; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Test - Analiz Sonuçları</h1>
+    
+    <div id="status" class="loading">API çağrısı yapılıyor...</div>
+    
+    <div id="results"></div>
+    
+    <script>
+        console.log('🚀 Test sayfası yüklendi');
+        
+        fetch('/analiz/liste')
+            .then(response => {
+                console.log('📡 API Response:', response.status);
+                document.getElementById('status').textContent = `API Response: ${response.status}`;
+                return response.json();
+            })
+            .then(data => {
+                console.log('📦 API Data:', data);
+                
+                const statusEl = document.getElementById('status');
+                const resultsEl = document.getElementById('results');
+                
+                if (data.success) {
+                    statusEl.className = 'success';
+                    statusEl.textContent = `✅ API Başarılı - ${data.total} analiz bulundu`;
+                    
+                    if (data.data && data.data.length > 0) {
+                        data.data.forEach(analiz => {
+                            const card = document.createElement('div');
+                            card.className = 'card';
+                            card.innerHTML = `
+                                <h3>${analiz.name}</h3>
+                                <p><strong>Durum:</strong> ${analiz.status}</p>
+                                <p><strong>Tweet Sayısı:</strong> ${analiz.tweetCount}</p>
+                                <p><strong>Analiz Türleri:</strong> ${analiz.types.join(', ')}</p>
+                                <p><strong>ID:</strong> ${analiz.id}</p>
+                            `;
+                            resultsEl.appendChild(card);
+                        });
+                    } else {
+                        resultsEl.innerHTML = '<p>Hiç analiz bulunamadı</p>';
+                    }
+                } else {
+                    statusEl.className = 'error';
+                    statusEl.textContent = `❌ API Hatası: ${data.error}`;
+                }
+            })
+            .catch(error => {
+                console.error('💥 Fetch Error:', error);
+                const statusEl = document.getElementById('status');
+                statusEl.className = 'error';
+                statusEl.textContent = `❌ Fetch Hatası: ${error.message}`;
+            });
+    </script>
+</body>
+</html> 
