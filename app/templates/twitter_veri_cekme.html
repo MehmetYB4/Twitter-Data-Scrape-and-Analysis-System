@@ -159,6 +159,27 @@
                     </div>
                 </form>
                 
+                <!-- Güvenlik ve İptal Butonları -->
+                <div class="mt-3">
+                    <div class="row g-2">
+                        <div class="col">
+                            <button class="btn btn-outline-warning btn-sm w-100" id="resetCookiesBtn">
+                                <i class="bi bi-shield-x me-1"></i>
+                                Oturum Temizle
+                            </button>
+                        </div>
+                        <div class="col">
+                            <button class="btn btn-outline-danger btn-sm w-100" id="cancelBtn" style="display: none;">
+                                <i class="bi bi-stop-circle me-1"></i>
+                                İptal Et
+                            </button>
+                        </div>
+                    </div>
+                    <small class="form-text text-muted mt-1">
+                        Güvenlik bloğu yaşıyorsanız "Oturum Temizle" butonunu kullanın
+                    </small>
+                </div>
+                
                 <!-- İşlem Durumu -->
                 <div id="statusContainer" class="mt-4" style="display: none;">
                     <div class="alert alert-info">
@@ -332,10 +353,61 @@ document.addEventListener('DOMContentLoaded', function() {
     // Dosyaları yenile
     refreshBtn.addEventListener('click', loadFiles);
     
+    // Oturum temizleme
+    document.getElementById('resetCookiesBtn').addEventListener('click', function() {
+        if (confirm('Twitter oturum bilgileri temizlenecek. Devam etmek istiyor musunuz?')) {
+            fetch('/twitter-veri-cekme/reset-cookies', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    showSuccess('Oturum bilgileri temizlendi. Yeni giriş yapılacak.', '');
+                } else {
+                    showError(result.message);
+                }
+            })
+            .catch(error => {
+                showError('Oturum temizlenirken hata: ' + error.message);
+            });
+        }
+    });
+    
+    // İptal etme
+    document.getElementById('cancelBtn').addEventListener('click', function() {
+        if (confirm('Devam eden işlem iptal edilecek. Emin misiniz?')) {
+            fetch('/twitter-veri-cekme/iptal', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    clearInterval(statusInterval);
+                    resetForm();
+                    showSuccess('İşlem iptal edildi.', '');
+                } else {
+                    showError(result.message);
+                }
+            })
+            .catch(error => {
+                showError('İptal işleminde hata: ' + error.message);
+            });
+        }
+    });
+    
     function startFetching(data) {
         isProcessing = true;
         startBtn.disabled = true;
         startBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>İşlem Başlatılıyor...';
+        
+        // İptal butonunu göster
+        document.getElementById('cancelBtn').style.display = 'block';
         
         fetch('/twitter-veri-cekme/basla', {
             method: 'POST',
@@ -402,6 +474,9 @@ document.addEventListener('DOMContentLoaded', function() {
         startBtn.disabled = false;
         startBtn.innerHTML = '<i class="bi bi-download me-2"></i>Veri Çekmeyi Başlat';
         statusContainer.style.display = 'none';
+        
+        // İptal butonunu gizle
+        document.getElementById('cancelBtn').style.display = 'none';
     }
     
     function loadFiles() {

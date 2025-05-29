@@ -1,9 +1,0 @@
-Bu araştırma önerisi, Twitter'daki(X) belirli kullanıcıların paylaşımlarını analiz ederek tematik ve duygusal içerikleri derinlemesine incelemeyi amaçlamaktadır. Proje; web scraping, veri ön işleme, konu modelleme, duygu analizi ve kelime bulutu analizi gibi doğal dil işleme tekniklerini kullanarak, kullanıcıların davranışlarını, düşünce yapılarını ve duygu durumlarını anlamaya yönelik özgün bir yaklaşım sunmaktadır. Bu analizler, pazarlama stratejileri, halk sağlığı politikaları ve finansal risk yönetimi gibi farklı sektörlerde stratejik kararlar almak için değerli bilgiler sunabilir. Projenin başarılı bir şekilde tamamlanması, sosyal medya verilerinin daha etkili bir şekilde kullanılmasına ve yeni araştırma alanlarının açılmasına katkı sağlayacaktır.
-
-Bu proje, sosyal medya platformu Twitter'da istenilen kullanıcıların paylaşımlarını analiz ederek tematik ve duygusal içeriğe ilişkin derinlemesine bilgi elde etmeyi amaçlamaktadır. Proje, konu modelleme, duygu analizi ve kelime bulutu analizi olmak üzere doğal dil işleme tekniklerini birleştirerek kullanıcılara ileri düzey analitikler sunmayı amaçlıyor. 
-Hedefler:
-o	Twitter'daki istenilen kullanıcıların paylaşımlarını toplayarak, kullanıcı bazlı verileri analiz etmek.
-o	Konu modelleme yaparak kullanıcıların ilgi alanlarını ve paylaşımlarındaki konuları ortaya çıkarmak.
-o	Duygu analizi teknikleri ile kullanıcıların paylaşımlarında ifade ettikleri duygusal eğilimleri belirlemek.
-o	Kelime bulutu analizi ile paylaşımlarda sık kullanılan kelimeleri görselleştirerek kullanıcıların dikkatini çeken konuları görsel olarak sunmak.
-o	Kullanıcılara, sonuçları rapor olarak sunan bir web arayüzü geliştirmek.

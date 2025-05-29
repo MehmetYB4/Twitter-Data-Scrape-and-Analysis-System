@@ -8,30 +8,28 @@ import re
 import string
 import unicodedata
 from typing import List, Union
+from collections import Counter
 
 
 # Genişletilmiş Türkçe stopwords listesi
 TURKISH_STOPWORDS = {
     've', 'bir', 'bu', 'da', 'de', 'için', 'ile', 'o', 'ki', 'çok', 'var', 'olan', 'olarak', 'ne',
-    'daha', 'kadar', 'en', 'ama', 'ya', 'sadece', 'son', 'şu', 've', 'tüm', 'kendi', 'gibi', 'bana',
+    'daha', 'kadar', 'en', 'ama', 'ya', 'sadece', 'son', 'şu', 'tüm', 'kendi', 'gibi', 'bana',
     'sana', 'ona', 'bize', 'size', 'onlara', 'benim', 'senin', 'onun', 'bizim', 'sizin', 'onların',
-    'ben', 'sen', 'biz', 'siz', 'onlar', 'şey', 'şeyi', 'şeyle', 'şeyin', 'şeyden', 'şeyde', 'şeye',
-    'neden', 'nasıl', 'nerede', 'ne', 'kim', 'hangi', 'kaç', 'hem', 'hiç', 'her', 'hep', 'hele',
-    'hala', 'hâlâ', 'henüz', 'hemen', 'hele', 'hadi', 'haydi', 'işte', 'artık', 'zaten', 'yine',
-    'gene', 'tekrar', 'yeniden', 'başka', 'diğer', 'öbür', 'öteki', 'beriki', 'şöyle', 'böyle',
-    'öyle', 'aynı', 'benzer', 'farklı', 'başka', 'birçok', 'pek', 'oldukça', 'fazla', 'az', 'biraz',
-    'az', 'çok', 'tam', 'yarım', 'buçuk', 'epey', 'hayli', 'iyice', 'oldukça', 'bir', 'iki', 'üç',
-    'şimdi', 'bugün', 'yarın', 'dün', 'önceki', 'sonraki', 'gelecek', 'geçen', 'bu', 'şu', 'o',
-    'buraya', 'şuraya', 'oraya', 'burada', 'şurada', 'orada', 'buradan', 'şuradan', 'oradan',
-    'yukarı', 'aşağı', 'ileri', 'geri', 'sağ', 'sol', 'ön', 'arka', 'iç', 'dış', 'alt', 'üst',
-    'oldu', 'olur', 'oluyor', 'olacak', 'olmuş', 'olmak', 'var', 'yok', 'vardı', 'yoktu', 'oldu',
-    'değil', 'değildi', 'değilmiş', 'mı', 'mi', 'mu', 'mü', 'ise', 'imiş', 'ken', 'iken', 'diye',
-    'kez', 'defa', 'sefer', 'gün', 'hafta', 'ay', 'yıl', 'asır', 'çağ', 'dönem', 'zaman', 'vakit',
-    'fakat', 'ancak', 'lakin', 'yoksa', 'eğer', 'madem', 'çünkü', 'için', 'dolayı', 'sayesinde',
-    'rağmen', 'karşın', 'göre', 'dair', 'kadar', 'değin', 'beri', 'önce', 'sonra', 'sırada',
-    'arasında', 'içinde', 'dışında', 'üzerinde', 'altında', 'yanında', 'karşısında', 'arkasında',
-    'ile', 'den', 'dan', 'ten', 'tan', 'nin', 'nın', 'nün', 'nun', 'ye', 'ya', 'e', 'a',
-    'i', 'ı', 'u', 'ü', 'o', 'ö', 'de', 'da', 'te', 'ta', 'ne', 'na', 'le', 'la',
+    'ben', 'sen', 'biz', 'siz', 'onlar', 'şey', 'şeyle', 'şeyin', 'şeyden', 'şeyde', 'şeye',
+    'neden', 'nasıl', 'nerede', 'kim', 'hangi', 'kaç', 'hem', 'hiç', 'her', 'hep',
+    'artık', 'zaten', 'yine', 'gene', 'tekrar', 'yeniden', 'başka', 'diğer', 'şöyle', 'böyle',
+    'öyle', 'aynı', 'benzer', 'farklı', 'birçok', 'pek', 'oldukça', 'fazla', 'az', 'biraz',
+    'şimdi', 'bugün', 'yarın', 'dün', 'önceki', 'sonraki', 'gelecek', 'geçen',
+    'buraya', 'şuraya', 'oraya', 'burada', 'şurada', 'orada', 'yukarı', 'aşağı', 'ileri', 'geri',
+    'oldu', 'olur', 'oluyor', 'olacak', 'olmuş', 'olmak', 'yok', 'vardı', 'yoktu',
+    'değil', 'değildi', 'mı', 'mi', 'mu', 'mü', 'ise', 'iken', 'diye',
+    'kez', 'defa', 'sefer', 'gün', 'hafta', 'ay', 'yıl',
+    'fakat', 'ancak', 'lakin', 'yoksa', 'eğer', 'madem', 'çünkü', 'dolayı', 'sayesinde',
+    'rağmen', 'karşın', 'göre', 'kadar', 'önce', 'sonra', 'sırada',
+    'arasında', 'içinde', 'dışında', 'üzerinde', 'altında', 'yanında',
+    'den', 'dan', 'ten', 'tan', 'nin', 'nın', 'nün', 'nun', 'ye', 'ya', 'e', 'a',
+    'i', 'ı', 'u', 'ü', 'ö', 'te', 'ta', 'ne', 'na', 'le', 'la',
     'ler', 'lar', 'dir', 'dır', 'dur', 'dür', 'tir', 'tır', 'tur', 'tür'
 }
 
@@ -129,15 +127,14 @@ def filter_by_length(words: List[str], min_length: int = 2, max_length: int = 50
 
 def remove_stopwords(words: List[str], custom_stopwords: set = None) -> List[str]:
     """Stopword'leri kaldırır"""
-    stopwords = TURKISH_STOPWORDS.copy()
+    stopwords_set = TURKISH_STOPWORDS.copy()
     if custom_stopwords:
-        stopwords.update(custom_stopwords)
-    return [word for word in words if word.lower() not in stopwords]
+        stopwords_set.update(custom_stopwords)
+    return [word for word in words if word.lower() not in stopwords_set]
 
 
 def filter_by_frequency(words: List[str], min_freq: int = 1, max_freq: int = None) -> List[str]:
     """Frekansa göre filtreler"""
-    from collections import Counter
     word_counts = Counter(words)
     
     if max_freq is None:
@@ -303,20 +300,18 @@ def batch_preprocess(texts: List[str],
     """
     Toplu text ön işleme fonksiyonu
     """
-    results = []
-    total = len(texts)
+    processed_texts = []
+    total_texts = len(texts)
     
     for i, text in enumerate(texts):
-        if show_progress and i % 100 == 0:
-            print(f"İşlenen: {i}/{total} ({i/total*100:.1f}%)")
-        
-        processed = preprocess_func(text)
-        results.append(processed)
+        processed_texts.append(preprocess_func(text))
+        if show_progress and (i + 1) % 100 == 0:
+            print(f"İşlenen: {i + 1}/{total_texts} ({i/total_texts*100:.1f}%)")
     
     if show_progress:
-        print(f"Tamamlandı: {total}/{total} (100.0%)")
+        print(f"Tamamlandı: {total_texts}/{total_texts} (100.0%)")
     
-    return results
+    return processed_texts
 
 
 # Backward compatibility için eski fonksiyon isimleri

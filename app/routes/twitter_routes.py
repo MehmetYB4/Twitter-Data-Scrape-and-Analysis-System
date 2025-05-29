@@ -111,6 +111,58 @@ def twitter_veri_cekme_durum():
     global fetching_status
     return jsonify(fetching_status)
 
+@twitter_bp.route('/twitter-veri-cekme/reset-cookies', methods=['POST'])
+def twitter_reset_cookies():
+    """Twitter cookies'leri temizle ve güvenlik sıfırlaması yap"""
+    try:
+        cookie_file = current_app.config['BASEDIR'] / 'twikit_sandbox' / 'twikit_cookies.json'
+        
+        # Cookie dosyasını sil
+        if cookie_file.exists():
+            cookie_file.unlink()
+            return jsonify({
+                'success': True,
+                'message': 'Oturum bilgileri temizlendi. Yeni giriş yapılacak.'
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'message': 'Zaten temiz oturum.'
+            })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Oturum temizlenirken hata: {str(e)}'
+        }), 500
+
+@twitter_bp.route('/twitter-veri-cekme/iptal', methods=['POST'])
+def twitter_veri_cekme_iptal():
+    """Devam eden Twitter veri çekme işlemini iptal et"""
+    global fetching_status
+    
+    try:
+        if fetching_status['is_active']:
+            fetching_status.update({
+                'is_active': False,
+                'message': 'İşlem kullanıcı tarafından iptal edildi.'
+            })
+            return jsonify({
+                'success': True,
+                'message': 'Veri çekme işlemi iptal edildi.'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Şu anda aktif bir işlem yok.'
+            }), 400
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'İptal işleminde hata: {str(e)}'
+        }), 500
+
 @twitter_bp.route('/twitter-veri-cekme/dosyalar')
 def twitter_dosyalar():
     """Çekilen Twitter dosyalarını listele"""
@@ -153,69 +205,117 @@ def twitter_dosyalar():
         }), 500
 
 async def fetch_tweets_async(username, tweet_count, app, config_data):
-    """Asenkron Twitter veri çekme fonksiyonu"""
+    """Asenkron Twitter veri çekme fonksiyonu - Güvenlik iyileştirmeli"""
     global fetching_status
     
     try:
-        # Twitter istemcisini oluştur
+        # Twitter istemcisini oluştur - User-Agent ve diğer güvenlik ayarları
         client = Client(language='tr-TR')
         
         # Cookie dosyası yolu
         cookie_file = Path(config_data['BASEDIR']) / 'twikit_sandbox' / 'twikit_cookies.json'
         
         # Twitter giriş bilgileri - güvenlik için environment variable'lardan alınmalı
-        USERNAME = "DiziSeyt"
-        EMAIL = "dizifilmizle420@outlook.com"
+        USERNAME = "DTest2025"
+        EMAIL = "twitterdeneme2025@outlook.com"
         PASSWORD = "14987abc"
         
         logged_in_via_cookie = False
         
-        # Cookie ile giriş deneme
+        # Önce uzun bir bekleme süresi ekle (güvenlik için)
+        fetching_status['message'] = 'Güvenlik kontrolü, beklenilen süre: 10 saniye...'
+        await asyncio.sleep(10)  # 10 saniye güvenlik beklemesi
+        
+        # Cookie ile giriş deneme - Daha dikkatli yaklaşım
         if cookie_file.exists():
             try:
                 client.load_cookies(str(cookie_file))
-                fetching_status['message'] = 'Oturum bilgileri yüklendi, test ediliyor...'
+                fetching_status['message'] = 'Kayıtlı oturum bilgileri test ediliyor...'
                 
-                # Cookie'nin çalışıp çalışmadığını test et
+                # Cookie geçerliliğini test et - Rate limit'e dikkat et
+                await asyncio.sleep(3)  # Test öncesi bekleme
                 try:
                     test_user = await client.get_user_by_screen_name('twitter')
                     if test_user:
                         logged_in_via_cookie = True
-                        fetching_status['message'] = 'Mevcut oturum geçerli'
+                        fetching_status['message'] = 'Kayıtlı oturum geçerli - devam ediliyor'
+                        await asyncio.sleep(2)  # Başarı sonrası güvenlik beklemesi
                     else:
-                        raise Exception("Cookie test failed")
+                        raise Exception("Cookie geçerliliği doğrulanamadı")
                 except Exception as cookie_test_error:
-                    fetching_status['message'] = 'Mevcut oturum geçersiz, yeni giriş yapılıyor...'
+                    fetching_status['message'] = 'Kayıtlı oturum geçersiz, yenileniyor...'
                     if cookie_file.exists():
                         cookie_file.unlink(missing_ok=True)
                     client = Client(language='tr-TR')
+                    await asyncio.sleep(5)  # Yenileme sonrası bekleme
             except Exception as e:
-                fetching_status['message'] = 'Cookie yüklenirken hata, yeni giriş yapılıyor...'
+                fetching_status['message'] = 'Oturum yüklenirken sorun, yeni giriş yapılacak...'
                 if cookie_file.exists():
                     cookie_file.unlink(missing_ok=True)
                 client = Client(language='tr-TR')
+                await asyncio.sleep(5)
         
-        # Gerekirse kullanıcı adı/şifre ile giriş
+        # Gerekirse kullanıcı adı/şifre ile giriş - Çok dikkatli
         if not logged_in_via_cookie:
-            fetching_status['message'] = 'Twitter\'a yeni giriş yapılıyor...'
+            fetching_status['message'] = 'Yeni oturum açılıyor... Bu 30-60 saniye sürebilir.'
+            
+            # Çok yavaş giriş - Twitter'ın güvenlik algılamasını önlemek için
+            await asyncio.sleep(15)  # Giriş öncesi uzun bekleme
+            
             try:
                 await client.login(
                     auth_info_1=USERNAME,
                     auth_info_2=EMAIL,
                     password=PASSWORD
                 )
+                
+                # Giriş sonrası güvenlik beklemesi
+                await asyncio.sleep(20)  # 20 saniye giriş sonrası bekleme
+                
                 client.save_cookies(str(cookie_file))
-                fetching_status['message'] = 'Giriş başarılı, oturum kaydedildi'
+                fetching_status['message'] = 'Giriş başarılı, oturum güvenli şekilde kaydedildi'
+                
+                # Ek güvenlik beklemesi
+                await asyncio.sleep(10)
+                
             except Exception as login_error:
-                fetching_status.update({
-                    'is_active': False,
-                    'message': f'Twitter giriş hatası: {str(login_error)}'
-                })
+                error_msg = str(login_error)
+                
+                # Güvenlik bloğu kontrolü
+                if any(keyword in error_msg.lower() for keyword in ['blok', 'block', 'suspend', 'restrict', 'geblokkeerd']):
+                    fetching_status.update({
+                        'is_active': False,
+                        'message': 'Twitter hesabı güvenlik nedeniyle bloklanmış. Lütfen web tarayıcısından Twitter\'a giriş yapıp hesap doğrulamayı tamamlayın, sonra 24 saat bekleyip tekrar deneyin.'
+                    })
+                elif 'rate limit' in error_msg.lower() or '429' in error_msg:
+                    fetching_status.update({
+                        'is_active': False,
+                        'message': 'Twitter rate limit aşıldı. 1 saat bekleyip tekrar deneyin.'
+                    })
+                elif 'captcha' in error_msg.lower():
+                    fetching_status.update({
+                        'is_active': False,
+                        'message': 'CAPTCHA doğrulaması gerekli. Web tarayıcısından Twitter\'a giriş yapın.'
+                    })
+                else:
+                    fetching_status.update({
+                        'is_active': False,
+                        'message': f'Giriş hatası: {error_msg[:200]}... Hesap bilgilerini kontrol edin.'
+                    })
                 return
         
-        # Kullanıcıyı bul
-        fetching_status['message'] = f'@{username} kullanıcısı aranıyor...'
-        target_user = await client.get_user_by_screen_name(username)
+        # Kullanıcı arama - Çok dikkatli
+        fetching_status['message'] = f'@{username} kullanıcısı aranıyor... Güvenlik beklemesi yapılıyor.'
+        await asyncio.sleep(8)  # Kullanıcı arama öncesi bekleme
+        
+        try:
+            target_user = await client.get_user_by_screen_name(username)
+        except Exception as user_error:
+            fetching_status.update({
+                'is_active': False,
+                'message': f'@{username} kullanıcısı bulunamadı veya erişilemiyor: {str(user_error)[:100]}'
+            })
+            return
         
         if not target_user:
             fetching_status.update({
@@ -224,64 +324,106 @@ async def fetch_tweets_async(username, tweet_count, app, config_data):
             })
             return
         
-        # Tweet çekme işlemi
-        fetching_status['message'] = f'@{username} kullanıcısının tweetleri çekiliyor...'
+        # Tweet çekme işlemi - ÇOK dikkatli ve yavaş
+        fetching_status['message'] = f'@{username} kullanıcısının tweetleri çekiliyor... Güvenlik protokolü aktif.'
         all_tweet_texts = []
         
         try:
-            current_page = await target_user.get_tweets('Tweets', count=min(tweet_count, 20))
-            page_count = 0
+            # İlk sayfa - küçük batch size
+            initial_count = min(tweet_count, 10)  # İlk seferde sadece 10 tweet
+            current_page = await target_user.get_tweets('Tweets', count=initial_count)
             
-            while current_page and len(all_tweet_texts) < tweet_count:
+            await asyncio.sleep(10)  # İlk sayfa sonrası uzun bekleme
+            
+            page_count = 0
+            consecutive_failures = 0
+            
+            while current_page and len(all_tweet_texts) < tweet_count and consecutive_failures < 3:
                 page_count += 1
-                fetching_status['message'] = f'{page_count}. sayfa işleniyor...'
+                fetching_status['message'] = f'Sayfa {page_count} işleniyor... Güvenlik beklemesi yapılıyor.'
                 
                 tweets_in_this_page = 0
-                for tweet in current_page:
-                    if len(all_tweet_texts) < tweet_count:
-                        all_tweet_texts.append(tweet.text)
-                        tweets_in_this_page += 1
-                        
-                        # Progress güncelle
-                        fetching_status['current_tweets'] = len(all_tweet_texts)
-                        fetching_status['progress'] = int((len(all_tweet_texts) / tweet_count) * 100)
-                    else:
-                        break
+                try:
+                    for tweet in current_page:
+                        if len(all_tweet_texts) < tweet_count:
+                            all_tweet_texts.append(tweet.text)
+                            tweets_in_this_page += 1
+                            
+                            # Progress güncelle
+                            fetching_status['current_tweets'] = len(all_tweet_texts)
+                            fetching_status['progress'] = int((len(all_tweet_texts) / tweet_count) * 100)
+                        else:
+                            break
+                    
+                    consecutive_failures = 0  # Başarılı sayfa, reset et
+                    
+                except Exception as page_process_error:
+                    consecutive_failures += 1
+                    fetching_status['message'] = f'Sayfa işleme hatası (Deneme {consecutive_failures}/3): {str(page_process_error)[:50]}'
+                    await asyncio.sleep(15)  # Hata sonrası uzun bekleme
+                    continue
                 
-                # Rate limiting için kısa bekleme
+                # Sonraki sayfa için çok uzun bekleme
                 if len(all_tweet_texts) < tweet_count and tweets_in_this_page > 0:
-                    fetching_status['message'] = f'Sonraki sayfa için bekleniyor... ({len(all_tweet_texts)}/{tweet_count})'
-                    await asyncio.sleep(2)  # 2 saniye bekle
+                    wait_time = 15 + (page_count * 5)  # Her sayfa için artan bekleme süresi
+                    fetching_status['message'] = f'Güvenlik protokolü: {wait_time} saniye bekleniyor... ({len(all_tweet_texts)}/{tweet_count})'
+                    await asyncio.sleep(wait_time)
                     
                     try:
                         next_page_data = await current_page.next()
                         if next_page_data and len(next_page_data) > 0:
                             current_page = next_page_data
                         else:
+                            fetching_status['message'] = 'Tüm sayfalar tamamlandı.'
                             break
                     except Exception as page_error:
-                        fetching_status['message'] = f'Sayfa yükleme hatası: {str(page_error)}'
-                        break
+                        consecutive_failures += 1
+                        error_msg = str(page_error)
+                        
+                        if 'rate limit' in error_msg.lower():
+                            fetching_status['message'] = f'Rate limit - 5 dakika bekleniyor...'
+                            await asyncio.sleep(300)  # 5 dakika bekle
+                        else:
+                            fetching_status['message'] = f'Sayfa yükleme hatası: {error_msg[:50]}'
+                            await asyncio.sleep(30)  # Hata sonrası 30 saniye bekle
                 else:
                     break
                     
         except Exception as tweets_error:
-            if "rate limit" in str(tweets_error).lower():
+            error_msg = str(tweets_error)
+            if "rate limit" in error_msg.lower():
                 fetching_status.update({
                     'is_active': False,
-                    'message': f'Twitter rate limit aşıldı. Lütfen 15 dakika sonra tekrar deneyin.'
+                    'message': f'Twitter rate limit aşıldı. En az 1 saat sonra tekrar deneyin. Toplanan tweet: {len(all_tweet_texts)}'
                 })
-                return
+            elif any(keyword in error_msg.lower() for keyword in ['block', 'suspend', 'restrict']):
+                fetching_status.update({
+                    'is_active': False,
+                    'message': f'Hesap kısıtlandı. Web tarayıcısından Twitter\'a giriş yapıp doğrulamayı tamamlayın.'
+                })
             else:
                 fetching_status.update({
                     'is_active': False,
-                    'message': f'Tweet çekme hatası: {str(tweets_error)}'
+                    'message': f'Tweet çekme hatası: {error_msg[:100]}... Toplanan tweet: {len(all_tweet_texts)}'
                 })
-                return
+            
+            # Hata durumunda bile topladığımız tweetleri kaydet
+            if all_tweet_texts:
+                output_filename = f"{username}_tweetler_kismi_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                output_path = config_data['TWEET_ARSIVLERI_FOLDER'] / output_filename
+                
+                with open(output_path, 'w', encoding='utf-8') as f:
+                    json.dump(all_tweet_texts, f, ensure_ascii=False, indent=2)
+                
+                fetching_status['filename'] = output_filename
+                fetching_status['message'] += f" Kısmi veri kaydedildi: {output_filename}"
+            
+            return
         
         # Dosyayı kaydet
         if all_tweet_texts:
-            output_filename = f"{username}_tweets.json"
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            output_filename = f"{username}_tweetleri_{timestamp}.json"
             output_path = config_data['TWEET_ARSIVLERI_FOLDER'] / output_filename
             
             with open(output_path, 'w', encoding='utf-8') as f:
@@ -290,17 +432,18 @@ async def fetch_tweets_async(username, tweet_count, app, config_data):
             fetching_status.update({
                 'is_active': False,
                 'progress': 100,
-                'message': f'Başarıyla tamamlandı! {len(all_tweet_texts)} tweet kaydedildi.',
+                'message': f'✅ Başarıyla tamamlandı! {len(all_tweet_texts)} tweet güvenli şekilde kaydedildi.',
                 'filename': output_filename
             })
         else:
             fetching_status.update({
                 'is_active': False,
-                'message': f'@{username} kullanıcısının tweeti bulunamadı!'
+                'message': f'@{username} kullanıcısının tweeti bulunamadı veya erişilemiyor!'
             })
         
-        # Oturumu kapat
+        # Güvenli çıkış
         try:
+            await asyncio.sleep(5)  # Çıkış öncesi bekleme
             await client.logout()
         except:
             pass
@@ -309,20 +452,24 @@ async def fetch_tweets_async(username, tweet_count, app, config_data):
         error_message = str(e)
         
         # Spesifik hata türlerine göre mesaj oluştur
-        if "401" in error_message or "authenticate" in error_message.lower():
-            final_message = "Twitter kimlik doğrulama hatası. Hesap bilgileri kontrol edilmelidir."
+        if any(keyword in error_message.lower() for keyword in ['blok', 'block', 'suspend', 'geblokkeerd', 'inlogpoging']):
+            final_message = "🔒 Twitter hesabı güvenlik nedeniyle geçici olarak kısıtlandı. Çözüm: 1) Web tarayıcısından Twitter.com'a giriş yapın 2) Güvenlik doğrulamasını tamamlayın 3) 24 saat bekleyin 4) Tekrar deneyin."
+        elif "401" in error_message or "authenticate" in error_message.lower():
+            final_message = "🔑 Kimlik doğrulama hatası. Hesap bilgileri kontrol edilmelidir."
         elif "rate limit" in error_message.lower() or "429" in error_message:
-            final_message = "Twitter rate limit aşıldı. 15 dakika sonra tekrar deneyin."
+            final_message = "⏱️ Twitter rate limit aşıldı. En az 1 saat sonra tekrar deneyin."
         elif "403" in error_message or "forbidden" in error_message.lower():
-            final_message = "Bu işlem için izin yok. Hesap kısıtlanmış olabilir."
+            final_message = "🚫 Bu işlem için izin yok. Hesap geçici olarak kısıtlanmış olabilir."
         elif "404" in error_message or "not found" in error_message.lower():
-            final_message = f"@{username} kullanıcısı bulunamadı veya erişilemiyor."
+            final_message = f"👤 @{username} kullanıcısı bulunamadı veya hesap gizli."
         elif "timeout" in error_message.lower():
-            final_message = "Bağlantı zaman aşımı. İnternet bağlantınızı kontrol edin."
+            final_message = "⏰ Bağlantı zaman aşımı. İnternet bağlantınızı kontrol edin ve tekrar deneyin."
         elif "connection" in error_message.lower():
-            final_message = "Bağlantı hatası. İnternet bağlantınızı kontrol edin."
+            final_message = "🌐 Bağlantı hatası. İnternet bağlantınızı kontrol edin."
+        elif "captcha" in error_message.lower():
+            final_message = "🤖 CAPTCHA doğrulaması gerekli. Web tarayıcısından Twitter'a giriş yapın."
         else:
-            final_message = f"Beklenmeyen hata: {error_message[:100]}..."
+            final_message = f"❌ Beklenmeyen hata: {error_message[:100]}..."
         
         fetching_status.update({
             'is_active': False,

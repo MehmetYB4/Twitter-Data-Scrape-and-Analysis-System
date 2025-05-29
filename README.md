@@ -1,232 +1,144 @@
-# 🐦 Twitter Analiz Platformu
+# 🐦 Twitter Veri Çekimi ve Analiz Sistemi
 
-Modern ve kapsamlı bir Twitter veri analizi ve doğal dil işleme platformu. Bu proje, Twitter verilerinizi derinlemesine analiz etmenizi sağlayan kullanıcı dostu bir web uygulamasıdır.
+[![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://python.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![GitHub issues](https://img.shields.io/github/issues/kullanici-adi/proje-adi.svg)](https://github.com/kullanici-adi/proje-adi/issues) <!-- TODO: Kullanıcı adı ve proje adını güncelleyin -->
 
-## 🌟 Özellikler
+Bu proje, Twitter platformundan belirli kullanıcıların tweet'lerini çekmek, bu verileri temizlemek ve çeşitli doğal dil işleme (NLP) teknikleriyle analiz etmek amacıyla geliştirilmiş bir Python uygulamasıdır.
 
-### 📊 Analiz Türleri
-- **LDA Konu Modelleme**: Tweet'lerdeki gizli konuları keşfetme
-- **Duygu Analizi**: Turkish BERT ile pozitif/negatif/nötr duygu sınıflandırması  
-- **Kelime Bulutu**: En sık kullanılan kelimelerin görsel analizi
+<!-- Opsiyonel: Projenizin kısa bir GIF veya ekran görüntüsünü buraya ekleyebilirsiniz -->
+<!-- ![Proje Arayüzü](path/to/your/screenshot.png) -->
 
-### 🚀 Platform Özellikleri
-- **Modern Web Arayüzü**: Bootstrap 5 ile responsive tasarım
-- **Real-time Progress Tracking**: Canlı analiz ilerleme takibi
-- **Çoklu Dosya Desteği**: Birden fazla Twitter arşivini aynı anda analiz
-- **Gelişmiş Ön İşleme**: 200+ Türkçe stopword ile optimize edilmiş metin işleme
-- **Etkileşimli Sonuçlar**: HTML ve PNG formatında çıktılar
-- **AI Yorumlu Raporlar**: Otomatik PDF rapor oluşturma
-- **Analiz Geçmişi**: Tüm analizlerinizi kaydetme ve yönetme
+## 🚀 Temel Özellikler
 
-### 🔧 Teknik Özellikler
-- **Modüler Mimari**: Bağımsız analiz modülleri
-- **Asenkron İşleme**: Background thread'ler ile performanslı analiz
-- **Hata Yönetimi**: Kapsamlı hata yakalama ve fallback mekanizmaları
-- **Güvenlik**: Dosya validasyonu ve güvenli yükleme
-- **API Desteği**: RESTful API endpoints
+- **Veri Çekme**: Belirli bir Twitter kullanıcısının tweetlerini `twikit` kütüphanesi aracılığıyla çeker.
+- **Oturum Yönetimi**: Cookie tabanlı oturum yönetimi ile tekrar tekrar giriş yapma ihtiyacını azaltır.
+- **Veri Ön İşleme**: Çekilen tweet metinlerini analiz için hazırlar (URL, mention, hashtag temizliği, normalizasyon vb.).
+- **Duygu Analizi**: Tweetlerin duygu yoğunluğunu (pozitif, negatif, nötr) belirler.
+- **Kelime Bulutu**: En sık geçen kelimeleri görselleştirir.
+- **Konu Modelleme (LDA)**: Tweetlerdeki gizli konuları ortaya çıkarır.
+- **Sonuç Kaydetme**: Analiz sonuçlarını ve çekilen tweetleri JSON formatında kaydeder.
+- **Web Arayüzü (Flask)**: Temel analiz işlemlerini yapmak ve sonuçları görüntülemek için basit bir web arayüzü sunar.
 
 ## 🛠️ Kurulum
 
-### Sistem Gereksinimleri
-- Python 3.8+
-- 4GB+ RAM (duygu analizi için)
-- 2GB+ disk alanı
+### Gereksinimler
 
-### Hızlı Kurulum
+- Python 3.9 veya üzeri
+- pip (Python paket yükleyicisi)
+
+### Adımlar
+
+1.  **Projeyi Klonlayın:**
+    ```bash
+    git clone https://github.com/kullanici-adi/proje-adi.git # TODO: Kendi GitHub linkinizle değiştirin
+    cd proje-adi
+    ```
+
+2.  **Sanal Ortam Oluşturun (Önerilir):
+    ```bash
+    python -m venv .venv
+    ```
+    Sanal ortamı aktive edin:
+    -   Windows:
+        ```bash
+        .venv\Scripts\activate
+        ```
+    -   macOS/Linux:
+        ```bash
+        source .venv/bin/activate
+        ```
+
+3.  **Gerekli Paketleri Yükleyin:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+4.  **Yapılandırma (Opsiyonel):**
+    - `twikit_sandbox/tweet_fetcher.py` içerisinde Twitter API erişimi için kendi kullanıcı adı, email ve şifrenizi girmeniz gerekebilir (güvenlik nedeniyle bu bilgilerin doğrudan koda yazılması önerilmez, environment variable gibi yöntemler tercih edilmelidir).
+    - `config.py` dosyası varsa, web uygulaması ayarlarını oradan düzenleyebilirsiniz.
+
+## 🎯 Kullanım
+
+### 1. Tweet Çekme (Komut Satırı)
+
+`tweet_fetcher.py` script'ini çalıştırarak belirli bir kullanıcının tweetlerini çekebilirsiniz:
 
 ```bash
-# Repository'yi klonlayın
-git clone <repository-url>
-cd VeriCekmeDahilEtme
+python twikit_sandbox/tweet_fetcher.py
+```
+Script sizden hedef kullanıcı adını ve çekmek istediğiniz tweet sayısını isteyecektir. Sonuçlar, ana dizinde `{kullanici_adi}_tweets.json` olarak kaydedilecektir.
 
-# Gerekli paketleri kurun
-pip install -r requirements.txt
+### 2. Web Arayüzü (Flask Uygulaması)
 
-# Uygulamayı başlatın
+Web arayüzünü başlatmak için:
+
+```bash
 python run.py
 ```
-
-### Detaylı Kurulum
-
-1. **Python Bağımlılıkları**
-```bash
-pip install flask pandas scikit-learn transformers torch
-pip install wordcloud matplotlib seaborn gensim
-pip install reportlab beautifulsoup4 requests
-```
-
-2. **Klasör Yapısını Oluşturun**
-```bash
-mkdir tweet_arsivleri
-mkdir sonuclar
-mkdir static/uploads
-```
-
-3. **Konfigürasyon**
-`config.py` dosyasında gerekli ayarları yapın.
+Uygulama varsayılan olarak `http://127.0.0.1:5000` adresinde çalışacaktır. Tarayıcınızdan bu adrese giderek:
+- Tweet dosyalarını yükleyebilir,
+- Çeşitli analizleri (duygu, kelime bulutu, LDA) çalıştırabilir,
+- Sonuçları görüntüleyebilirsiniz.
 
 ## 📂 Proje Yapısı
 
 ```
-VeriCekmeDahilEtme/
-├── analiz/                 # Analiz modülleri
-│   ├── lda/               # LDA konu modelleme
-│   ├── sentiment/         # Duygu analizi
-│   ├── wordcloud/         # Kelime bulutu
-│   └── preprocessing.py   # Gelişmiş ön işleme
-├── app/                   # Flask web uygulaması
-│   ├── routes/           # Route tanımları
-│   ├── templates/        # HTML şablonları
-│   └── static/           # CSS, JS, resimler
-├── tweet_arsivleri/      # Twitter veri dosyaları
-├── sonuclar/             # Analiz sonuçları
-├── run.py               # Ana uygulama dosyası
-└── requirements.txt     # Python bağımlılıkları
+. 
+├── analiz/                 # Analiz modülleri (preprocessing, sentiment, wordcloud, lda)
+│   ├── __init__.py
+│   ├── preprocessing.py
+│   ├── sentiment/
+│   ├── wordcloud/
+│   └── lda/
+├── app/                    # Flask web uygulaması
+│   ├── __init__.py
+│   ├── routes/             # Web route tanımları
+│   ├── templates/          # HTML şablonları
+│   └── utils/              # Yardımcı fonksiyonlar
+├── static/                 # Web arayüzü için statik dosyalar (CSS, JS, resimler)
+├── twikit_sandbox/         # Twitter veri çekme scriptleri
+│   └── tweet_fetcher.py
+├── tweet_arsivleri/        # Yüklenen veya çekilen tweet dosyaları (web arayüzü için)
+├── sonuclar/               # Web arayüzünden yapılan analiz sonuçları
+├── LICENSE                 # Proje lisansı (MIT)
+├── README.md               # Bu dosya
+├── requirements.txt        # Gerekli Python kütüphaneleri
+├── run.py                  # Flask uygulamasını başlatan ana script
+├── config.py               # (Varsa) Uygulama yapılandırma ayarları
+└── .gitignore              # Git tarafından takip edilmeyecek dosyalar/klasörler
 ```
 
-## 🎯 Kullanım
+## 🔬 Teknik Detaylar
 
-### 1. Veri Hazırlama
-- Twitter arşiv dosyalarınızı `tweet_arsivleri/` klasörüne koyun
-- Desteklenen format: JSON (Twitter API formatı)
-
-### 2. Analiz Süreci
-1. **Veri Seçimi**: Analiz edilecek dosyaları seçin
-2. **Konfigürasyon**: Analiz türlerini ve parametreleri ayarlayın
-3. **Analiz Başlatma**: "Analizi Başlat" butonuna tıklayın
-4. **Progress Tracking**: Real-time ilerleme takibi
-5. **Sonuç İnceleme**: Detaylı analiz sonuçlarını görüntüleyin
-
-### 3. Sonuç Formatları
-- **LDA**: Etkileşimli HTML görselleştirme
-- **Duygu Analizi**: PNG grafikleri + CSV verileri
-- **Kelime Bulutu**: PNG görsel + CSV kelime listeleri
-- **Tam Rapor**: AI yorumlu PDF rapor
-
-## 🔬 Analiz Detayları
-
-### LDA Konu Modelleme
-- Gensim LDA implementasyonu
-- 2-8 arası konu sayısı desteği
-- pyLDAvis ile etkileşimli görselleştirme
-- Konu-belge dağılım matrisleri
-
-### Duygu Analizi
-- Turkish BERT pre-trained model
-- 3 sınıf: Pozitif, Negatif, Nötr
-- Batch processing ile hızlı analiz
-- Güven skorları ile detaylı sonuçlar
-
-### Kelime Bulutu
-- Gelişmiş Türkçe metin ön işleme
-- 200+ stopword filtreleme
-- Farklı renk şemaları
-- Frekans bazlı boyutlandırma
-
-## 📈 Performans
-
-### Analiz Süreleri (tahmini)
-- **100 tweet**: ~30 saniye
-- **1000 tweet**: ~2 dakika
-- **5000 tweet**: ~8 dakika
-- **10000+ tweet**: ~15+ dakika
-
-### Optimizasyon İpuçları
-- LDA konu sayısını düşük tutun (2-5)
-- Duygu analizi için batch size'ı artırın
-- Küçük dosyalar için "Hızlı Analiz" modunu kullanın
-
-## 🔧 Konfigürasyon
-
-### Analiz Parametreleri
-```python
-# LDA Ayarları
-LDA_TOPICS = 5          # Konu sayısı
-LDA_ITERATIONS = 20     # Iterasyon sayısı
-
-# Duygu Analizi
-BATCH_SIZE = 16         # Batch büyüklüğü
-SENTIMENT_MODEL = "turkish-bert"
-
-# Kelime Bulutu
-MAX_WORDS = 100         # Maksimum kelime
-COLOR_SCHEME = "viridis"
-```
-
-### Sunucu Ayarları
-```python
-# Flask Konfigürasyonu
-DEBUG = True
-PORT = 5000
-HOST = "localhost"
-
-# Dosya Yolları
-TWEET_ARSIVLERI_FOLDER = "tweet_arsivleri"
-SONUCLAR_FOLDER = "sonuclar"
-```
-
-## 🐛 Sorun Giderme
-
-### Yaygın Sorunlar
-
-**1. Analiz başlamıyor**
-- Console'da hata mesajlarını kontrol edin
-- Dosya seçimini doğrulayın
-- Internet bağlantınızı kontrol edin
-
-**2. Duygu analizi yavaş**
-- Batch size'ı düşürün (8-16)
-- RAM kullanımını kontrol edin
-- GPU kullanımını aktifleştirin (opsiyonel)
-
-**3. Kelime bulutu boş**
-- Stopword listesini kontrol edin
-- Minimum kelime uzunluğunu düşürün
-- Veri kalitesini kontrol edin
-
-### Debug Modu
-```bash
-# Debug modunda çalıştırma
-export FLASK_ENV=development
-python run.py
-```
+- **Veri Çekme**: `twikit` kütüphanesi kullanılarak asenkron olarak Twitter verileri çekilir. Cookie tabanlı oturum yönetimi ile API kullanımı optimize edilir.
+- **Ön İşleme**: `analiz/preprocessing.py` içerisinde bulunan fonksiyonlar ile metinler temizlenir (URL, mention, hashtag kaldırma, küçük harfe çevirme, noktalama işaretleri ve emojilerin temizlenmesi, stop-word filtreleme).
+- **Duygu Analizi**: Genellikle `TextBlob` gibi kütüphanelerle veya daha gelişmiş modellerle (örneğin, `transformers` kütüphanesinden BERT tabanlı modeller) yapılır.
+- **Kelime Bulutu**: `wordcloud` kütüphanesi ile en sık geçen kelimeler görselleştirilir.
+- **LDA Konu Modelleme**: `gensim` veya `scikit-learn` kütüphaneleri ile metinlerdeki gizli konular bulunur.
+- **Web Framework**: `Flask` kullanılarak basit ve modüler bir web arayüzü oluşturulmuştur.
 
 ## 🤝 Katkıda Bulunma
 
-1. Repository'yi fork edin
-2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
-3. Değişikliklerinizi commit edin (`git commit -m 'Add amazing feature'`)
-4. Branch'i push edin (`git push origin feature/amazing-feature`)
-5. Pull Request açın
+Katkılarınız projeyi daha da geliştirmemize yardımcı olacaktır! Lütfen aşağıdaki adımları izleyin:
+
+1.  Projeyi Fork Edin.
+2.  Yeni bir Feature Branch oluşturun (`git checkout -b feature/YeniOzellik`).
+3.  Değişikliklerinizi Commit edin (`git commit -m 'Yeni bir özellik eklendi'`).
+4.  Branch'inizi Push edin (`git push origin feature/YeniOzellik`).
+5.  Bir Pull Request açın.
+
+Lütfen Pull Request açmadan önce kodunuzun PEP 8 standartlarına uygun olduğundan ve test edildiğinden emin olun.
 
 ## 📜 Lisans
 
-Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için `LICENSE` dosyasına bakın.
+Bu proje [MIT Lisansı](LICENSE) altında lisanslanmıştır.
 
 ## 🙏 Teşekkürler
 
-### Kullanılan Kütüphaneler
-- **Flask**: Web framework
-- **Transformers**: Turkish BERT modeli
-- **Gensim**: LDA konu modelleme
-- **Scikit-learn**: Makine öğrenmesi
-- **WordCloud**: Kelime bulutu oluşturma
-- **Bootstrap**: Modern UI framework
-
-### Veri Kaynakları
-- Turkish BERT modeli: `dbmdz/bert-base-turkish-cased`
-- Türkçe stopword listeleri
-- Twitter API format desteği
-
-## 📞 İletişim
-
-Sorularınız için:
-- Issue açın: GitHub Issues
-- Dokumentasyon: Bu README dosyası
-- Wiki: Proje wiki sayfaları
+- `twikit` kütüphanesinin geliştiricilerine.
+- Projede kullanılan açık kaynak kütüphanelerin (Flask, NLTK, TextBlob, WordCloud vb.) geliştiricilerine.
 
 ---
 
-**🚀 Twitter verilerinizi analiz etmeye başlayın!**
-
-*Bu platform, doğal dil işleme ve makine öğrenmesi teknikleriyle Twitter verilerinizden değerli içgörüler elde etmenizi sağlar.* 
+Sorularınız veya önerileriniz için lütfen bir [Issue](https://github.com/kullanici-adi/proje-adi/issues) açmaktan çekinmeyin! <!-- TODO: Kullanıcı adı ve proje adını güncelleyin --> 
