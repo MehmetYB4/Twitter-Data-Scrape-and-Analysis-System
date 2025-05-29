@@ -140,7 +140,13 @@ def _process_text(df_clean, metin_kolonu, min_word_length, remove_numbers, custo
         'onlar', 'kendi', 'her', 'hiç', 'bazı', 'tüm', 'bütün', 'kadar', 'sonra',
         'önce', 'şimdi', 'bugün', 'dün', 'yarın', 'ne', 'nasıl', 'neden', 'niçin',
         'nerede', 'ne', 'hangi', 'kim', 'kimin', 'kime', 'kimden', 'artık', 'hala',
-        'henüz', 'sadece', 'yalnız', 'bile', 'dahi', 'rağmen', 'karşın'
+        'henüz', 'sadece', 'yalnız', 'bile', 'dahi', 'rağmen', 'karşın', 'https', 'www', 'com', 'tr', 'org', 'net', 'edu', 'gov', 'mil', 'biz', 'sen', 'biz', 'siz',
+        'onlar', 'kendi', 'her', 'hiç', 'bazı', 'tüm', 'bütün', 'kadar', 'sonra',
+        'önce', 'şimdi', 'bugün', 'dün', 'yarın', 'ne', 'nasıl', 'neden', 'niçin',
+        'nerede', 'ne', 'hangi', 'kim', 'kimin', 'kime', 'kimden', 'artık', 'hala',
+        'henüz', 'sadece', 'yalnız', 'bile', 'dahi', 'rağmen', 'karşın', 'https', 'www', 'com', 'tr', 'org', 'net', 'edu', 'gov', 'mil', 'biz', 'sen', 'biz', 'siz',
+        'onlar', 'kendi', 'her', 'hiç', 'bazı', 'tüm', 'bütün', 'kadar', 'sonra',
+        'önce', 'şimdi', 'bugün', 'dün', 'yarın', 'ne', 'nasıl', 'neden', 'niçin'    
     }
     
     # Özel stopwords ekle

@@ -1,0 +1,60 @@
+KELIME İSTATİSTİKLERİ
+==================================================
+
+Toplam metin sayısı: 701
+Toplam benzersiz kelime: 2418
+Toplam kelime kullanımı: 4790
+Ortalama kelime uzunluğu: 7.4
+
+EN SIK KULLANILAN 50 KELİME:
+------------------------------
+ 1. ufc            :   58 kez
+ 2. alex           :   52 kez
+ 3. i̇bo           :   35 kez
+ 4. pereira        :   35 kez
+ 5. ilk            :   33 kez
+ 6. aslan          :   28 kez
+ 7. nakavt         :   27 kez
+ 8. ana            :   27 kez
+ 9. sean           :   22 kez
+10. rauntta        :   22 kez
+11. son            :   21 kez
+12. kartında       :   21 kez
+13. magomed        :   21 kez
+14. ankalaev       :   21 kez
+15. ediyor         :   20 kez
+16. maç            :   20 kez
+17. sizce          :   19 kez
+18. kararla        :   18 kez
+19. maçı           :   17 kez
+20. şampiyon       :   17 kez
+21. ortak          :   16 kez
+22. dana           :   15 kez
+23. topuria        :   15 kez
+24. yan            :   15 kez
+25. adesanya       :   15 kez
+26. iyi            :   15 kez
+27. justin         :   14 kez
+28. karşı          :   14 kez
+29. silva          :   14 kez
+30. kart           :   13 kez
+31. kartı          :   13 kez
+32. via            :   13 kez
+33. islam          :   12 kez
+34. alt            :   12 kez
+35. fiziev         :   12 kez
+36. jean           :   12 kez
+37. canlı          :   11 kez
+38. maçında        :   11 kez
+39. dövüş          :   11 kez
+40. khamzat        :   11 kez
+41. bahis          :   11 kez
+42. israel         :   11 kez
+43. kazanıyor      :   11 kez
+44. gaethje        :   10 kez
+45. fighting       :   10 kez
+46. zhang          :   10 kez
+47. birlikte       :   10 kez
+48. pes            :    9 kez
+49. pereiranın     :    9 kez
+50. white          :    9 kez

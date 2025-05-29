@@ -945,8 +945,15 @@ function checkAnalysisProgress() {
                 const analysisData = data.data;
                 const progress = analysisData.ilerleme || 0;
                 const status = analysisData.durum;
+                const analiz_ismi = analysisData.analiz_ismi || 'Analiz';
                 
-                console.log(`📈 Progress: ${progress}%, Status: ${status}`);
+                console.log(`📈 Progress: ${progress}%, Status: ${status}, İsim: ${analiz_ismi}`);
+                
+                // Modal başlığını güncelle
+                const modalTitle = document.querySelector('#progressModal .modal-body h6');
+                if (modalTitle && analiz_ismi !== 'Analiz') {
+                    modalTitle.textContent = analiz_ismi;
+                }
                 
                 // Progress bar'ı güncelle
                 updateProgressBar(progress, status);

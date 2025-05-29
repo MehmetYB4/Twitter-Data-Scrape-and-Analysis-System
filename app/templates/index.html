@@ -228,7 +228,6 @@
                 <ul class="list-unstyled text-start">
                     <li><i class="bi bi-check-circle text-success"></i> BERT Türkçe model desteği</li>
                     <li><i class="bi bi-check-circle text-success"></i> Batch processing</li>
-                    <li><i class="bi bi-check-circle text-success"></i> Zaman serisi analizi</li>
                 </ul>
             </div>
         </div>
@@ -377,6 +376,12 @@ document.addEventListener('DOMContentLoaded', function() {
 function loadDashboardStats() {
     console.log('📈 Dashboard istatistikleri yükleniyor...');
     
+    // Bu fonksiyon sadece ana sayfada çalışmalı
+    if (!document.getElementById('totalFiles')) {
+        console.log('⚠️ Dashboard elementleri bulunamadı, ana sayfa değil - fonksiyon atlanıyor');
+        return;
+    }
+    
     // Dosya istatistikleri
     fetch('/api/files/stats')
         .then(response => response.json())
@@ -395,10 +400,15 @@ function loadDashboardStats() {
         })
         .catch(error => {
             console.error('Dosya istatistikleri yüklenirken hata:', error);
-            document.getElementById('totalFiles').textContent = '1';
-            document.getElementById('totalTweets').textContent = '20';
-            document.getElementById('filesSize').textContent = '0.5 MB';
-            document.getElementById('tweetsToday').textContent = 'Bugün: 20';
+            const totalFilesElement = document.getElementById('totalFiles');
+            const totalTweetsElement = document.getElementById('totalTweets');
+            const filesSizeElement = document.getElementById('filesSize');
+            const tweetsTodayElement = document.getElementById('tweetsToday');
+            
+            if (totalFilesElement) totalFilesElement.textContent = '1';
+            if (totalTweetsElement) totalTweetsElement.textContent = '20';
+            if (filesSizeElement) filesSizeElement.textContent = '0.5 MB';
+            if (tweetsTodayElement) tweetsTodayElement.textContent = 'Bugün: 20';
         });
     
     // Analiz istatistikleri
@@ -411,25 +421,33 @@ function loadDashboardStats() {
                 const tamamlanan = analizler.filter(a => a.status === 'tamamlandı').length;
                 const total = analizler.length;
                 
-                document.getElementById('activeAnalysis').textContent = aktif;
-                document.getElementById('completedAnalysis').textContent = tamamlanan;
-                document.getElementById('queuedAnalysis').textContent = `Sırada: 0`;
+                const activeAnalysisElement = document.getElementById('activeAnalysis');
+                const completedAnalysisElement = document.getElementById('completedAnalysis');
+                const queuedAnalysisElement = document.getElementById('queuedAnalysis');
+                const successRateElement = document.getElementById('successRate');
+                const avgDurationElement = document.getElementById('avgDuration');
+                const fastestAnalysisElement = document.getElementById('fastestAnalysis');
+                const systemLoadElement = document.getElementById('systemLoad');
+                
+                if (activeAnalysisElement) activeAnalysisElement.textContent = aktif;
+                if (completedAnalysisElement) completedAnalysisElement.textContent = tamamlanan;
+                if (queuedAnalysisElement) queuedAnalysisElement.textContent = `Sırada: 0`;
                 
                 // Başarı oranı hesapla
                 const successRate = total > 0 ? Math.round((tamamlanan / total) * 100) : 100;
-                document.getElementById('successRate').textContent = `Başarı: ${successRate}%`;
+                if (successRateElement) successRateElement.textContent = `Başarı: ${successRate}%`;
                 
                 // Ortalama süre hesapla
                 const avgDuration = calculateAverageDuration(analizler);
-                document.getElementById('avgDuration').textContent = avgDuration;
+                if (avgDurationElement) avgDurationElement.textContent = avgDuration;
                 
                 // En hızlı analiz
                 const fastest = findFastestAnalysis(analizler);
-                document.getElementById('fastestAnalysis').textContent = fastest;
+                if (fastestAnalysisElement) fastestAnalysisElement.textContent = fastest;
                 
                 // Sistem yükü
                 const systemLoad = aktif > 2 ? 'Yüksek' : aktif > 0 ? 'Orta' : 'Düşük';
-                document.getElementById('systemLoad').textContent = systemLoad;
+                if (systemLoadElement) systemLoadElement.textContent = systemLoad;
                 
                 updateCharts(analizler);
                 loadRecentAnalyses(analizler);
@@ -437,12 +455,19 @@ function loadDashboardStats() {
         })
         .catch(error => {
             console.error('Analiz istatistikleri yüklenirken hata:', error);
-            document.getElementById('activeAnalysis').textContent = '0';
-            document.getElementById('completedAnalysis').textContent = '1';
-            document.getElementById('queuedAnalysis').textContent = 'Sırada: 0';
-            document.getElementById('successRate').textContent = 'Başarı: 100%';
-            document.getElementById('avgDuration').textContent = '15.2s';
-            document.getElementById('fastestAnalysis').textContent = '15.2s';
+            const activeAnalysisElement = document.getElementById('activeAnalysis');
+            const completedAnalysisElement = document.getElementById('completedAnalysis');
+            const queuedAnalysisElement = document.getElementById('queuedAnalysis');
+            const successRateElement = document.getElementById('successRate');
+            const avgDurationElement = document.getElementById('avgDuration');
+            const fastestAnalysisElement = document.getElementById('fastestAnalysis');
+            
+            if (activeAnalysisElement) activeAnalysisElement.textContent = '0';
+            if (completedAnalysisElement) completedAnalysisElement.textContent = '1';
+            if (queuedAnalysisElement) queuedAnalysisElement.textContent = 'Sırada: 0';
+            if (successRateElement) successRateElement.textContent = 'Başarı: 100%';
+            if (avgDurationElement) avgDurationElement.textContent = '15.2s';
+            if (fastestAnalysisElement) fastestAnalysisElement.textContent = '15.2s';
         });
 }
 

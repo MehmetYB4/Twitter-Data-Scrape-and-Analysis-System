@@ -1,0 +1,60 @@
+KELIME İSTATİSTİKLERİ
+==================================================
+
+Toplam metin sayısı: 534
+Toplam benzersiz kelime: 3915
+Toplam kelime kullanımı: 8367
+Ortalama kelime uzunluğu: 8.6
+
+EN SIK KULLANILAN 50 KELİME:
+------------------------------
+ 1. açıklama       :   53 kez
+ 2. genel          :   53 kez
+ 3. ekrem          :   52 kez
+ 4. yapıyorum      :   42 kez
+ 5. gerçekleştiriyoruz:   39 kez
+ 6. i̇stanbul      :   38 kez
+ 7. milletin       :   37 kez
+ 8. halk           :   36 kez
+ 9. özgür          :   34 kez
+10. adalet         :   34 kez
+11. mayıs          :   33 kez
+12. birlikte       :   33 kez
+13. başkanı        :   33 kez
+14. özel           :   31 kez
+15. cumhuriyet     :   31 kez
+16. millet         :   31 kez
+17. sahip          :   30 kez
+18. cumhurbaşkanı  :   29 kez
+19. yanıtlıyorum   :   29 kez
+20. sorularını     :   28 kez
+21. gazetecilerin  :   25 kez
+22. hep            :   25 kez
+23. partisi        :   24 kez
+24. erdoğan        :   23 kez
+25. büyük          :   22 kez
+26. grup           :   22 kez
+27. karşı          :   21 kez
+28. gün            :   20 kez
+29. iktidar        :   20 kez
+30. nisan          :   20 kez
+31. meydanı        :   20 kez
+32. olsun          :   20 kez
+33. partimizin     :   20 kez
+34. toplantısını   :   20 kez
+35. türkiye        :   20 kez
+36. ediyorum       :   20 kez
+37. anıyorum       :   19 kez
+38. ediyoruz       :   19 kez
+39. mart           :   19 kez
+40. eczozgurozel   :   18 kez
+41. belediyemizin  :   18 kez
+42. yıl            :   18 kez
+43. i̇mamoğlu      :   18 kez
+44. ardından       :   17 kez
+45. belediye       :   17 kez
+46. parti          :   17 kez
+47. devam          :   17 kez
+48. diliyorum      :   17 kez
+49. yılında        :   16 kez
+50. teşekkür       :   16 kez

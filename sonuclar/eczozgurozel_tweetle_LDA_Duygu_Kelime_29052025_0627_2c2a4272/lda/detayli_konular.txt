@@ -1,0 +1,57 @@
+DETAYLI KONU ANALİZİ
+==================================================
+
+KONU 1:
+--------------------
+0.020*"için" + 0.020*"bir" + 0.012*"tüm" + 0.011*"özgür" + 0.010*"özel" + 0.009*"sorularını" + 0.009*"https://" + 0.008*"yanıtlıyorum" + 0.008*"http://" + 0.008*"gazetecilerin"
+
+En önemli kelimeler:
+  • için: 0.0203
+  • bir: 0.0202
+  • tüm: 0.0116
+  • özgür: 0.0110
+  • özel: 0.0098
+  • sorularını: 0.0086
+  • https://: 0.0085
+  • yanıtlıyorum: 0.0080
+  • http://: 0.0078
+  • gazetecilerin: 0.0076
+
+==================================================
+
+KONU 2:
+--------------------
+0.023*"bir" + 0.012*"gerçekleştiriyoruz" + 0.009*"bugün" + 0.009*"için" + 0.008*"kemal" + 0.008*"her" + 0.008*"mustafa" + 0.008*"cumhuriyet" + 0.007*"ekrem" + 0.007*"gün"
+
+En önemli kelimeler:
+  • bir: 0.0229
+  • gerçekleştiriyoruz: 0.0118
+  • bugün: 0.0090
+  • için: 0.0089
+  • kemal: 0.0084
+  • her: 0.0083
+  • mustafa: 0.0077
+  • cumhuriyet: 0.0075
+  • ekrem: 0.0074
+  • gün: 0.0072
+
+==================================================
+
+KONU 3:
+--------------------
+0.030*"açıklama" + 0.025*"yapıyorum" + 0.017*"genel" + 0.013*"ekrem" + 0.011*"başkanı" + 0.011*"https://" + 0.011*"ardından" + 0.010*"meydanı" + 0.010*"partisi" + 0.010*"mayıs"
+
+En önemli kelimeler:
+  • açıklama: 0.0296
+  • yapıyorum: 0.0254
+  • genel: 0.0175
+  • ekrem: 0.0127
+  • başkanı: 0.0113
+  • https://: 0.0111
+  • ardından: 0.0108
+  • meydanı: 0.0102
+  • partisi: 0.0100
+  • mayıs: 0.0098
+
+==================================================
+

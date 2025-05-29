@@ -5,7 +5,7 @@ Analiz Route'ları
 Analiz işlemlerini başlatan ve yöneten route'lar.
 """
 
-from flask import Blueprint, render_template, request, jsonify, current_app, send_from_directory
+from flask import Blueprint, render_template, request, jsonify, current_app, send_from_directory, send_file
 from pathlib import Path
 import uuid
 import json
@@ -14,6 +14,8 @@ from datetime import datetime
 import time
 import pandas as pd # Veri işleme için
 import re # Regex işlemleri için
+import mimetypes
+import os
 
 # Analiz işlemleri için import
 import sys
@@ -32,15 +34,38 @@ def demo_analiz_ekle():
     try:
         import os
         
+        # Önce aktif_analizler'i temizle (duplikasyon önlemek için)
+        global aktif_analizler
+        
         # Sonuçlar klasörünü kontrol et
         sonuclar_path = Path('sonuclar')
         if sonuclar_path.exists():
+            # Mevcut klasörleri unique ID ile kaydet
+            bulunan_analizler = {}
+            
             for analiz_klasoru in sonuclar_path.iterdir():
-                if analiz_klasoru.is_dir() and analiz_klasoru.name not in aktif_analizler:
-                    analiz_id = analiz_klasoru.name
+                if analiz_klasoru.is_dir():
+                    klasor_adi = analiz_klasoru.name
                     
                     # Gereksiz klasörleri filtrele
-                    if analiz_id in ['lda_sonuclari', 'duygu_sonuclari', 'wordcloud_sonuclari']:
+                    if klasor_adi in ['lda_sonuclari', 'duygu_sonuclari', 'wordcloud_sonuclari']:
+                        continue
+                    
+                    # Klasör adından analiz_id'yi çıkar
+                    # Format: safe_veri_set_analiz_turu_tarih_analiz_id (son 8 karakter)
+                    if len(klasor_adi) >= 8:
+                        # Son 8 karakteri analiz ID olarak al
+                        parts = klasor_adi.split('_')
+                        if len(parts) >= 2:
+                            analiz_id = parts[-1]  # Son kısım analiz ID'si
+                        else:
+                            analiz_id = klasor_adi[-8:]  # Son 8 karakter
+                    else:
+                        analiz_id = klasor_adi
+                    
+                    # Zaten bu ID varsa skip et (duplikasyon önleme)
+                    if analiz_id in bulunan_analizler:
+                        print(f"⚠️ Duplikasyon tespit edildi, atlanıyor: {analiz_id} (klasör: {klasor_adi})")
                         continue
                     
                     # Analiz türlerini belirle
@@ -50,23 +75,28 @@ def demo_analiz_ekle():
                     if (analiz_klasoru / 'lda').exists():
                         analiz_turleri.append('lda')
                         sonuclar['lda'] = {
-                            'klasor': f'sonuclar/{analiz_id}/lda',
+                            'klasor': f'sonuclar/{klasor_adi}/lda',
                             'durum': 'tamamlandı'
                         }
                     
                     if (analiz_klasoru / 'sentiment').exists():
                         analiz_turleri.append('sentiment')
                         sonuclar['sentiment'] = {
-                            'klasor': f'sonuclar/{analiz_id}/sentiment',
+                            'klasor': f'sonuclar/{klasor_adi}/sentiment',
                             'durum': 'tamamlandı'
                         }
                     
                     if (analiz_klasoru / 'wordcloud').exists():
                         analiz_turleri.append('wordcloud')
                         sonuclar['wordcloud'] = {
-                            'klasor': f'sonuclar/{analiz_id}/wordcloud',
+                            'klasor': f'sonuclar/{klasor_adi}/wordcloud',
                             'durum': 'tamamlandı'
                         }
+                    
+                    # Hiçbir analiz türü bulunamazsa skip et
+                    if not analiz_turleri:
+                        print(f"⚠️ Analiz türü bulunamadı, atlanıyor: {klasor_adi}")
+                        continue
                     
                     # Klasör oluşturma tarihini al
                     try:
@@ -95,16 +125,19 @@ def demo_analiz_ekle():
                             import pandas as pd
                             df = pd.read_csv(lda_csv)
                             tweet_sayisi = len(df)
+                            print(f"📄 {analiz_id} - LDA CSV'den tweet sayısı: {tweet_sayisi}")
                         # Sentiment CSV'sinden de kontrol et
                         elif (analiz_klasoru / 'sentiment' / 'duygu_analizi_sonuclari.csv').exists():
                             sentiment_csv = analiz_klasoru / 'sentiment' / 'duygu_analizi_sonuclari.csv'
                             df = pd.read_csv(sentiment_csv)
                             tweet_sayisi = len(df)
-                    except:
-                        pass
+                            print(f"📄 {analiz_id} - Sentiment CSV'den tweet sayısı: {tweet_sayisi}")
+                    except Exception as e:
+                        print(f"⚠️ {analiz_id} - Tweet sayısı hesaplama hatası: {e}")
                     
-                    # Aktif analizlere ekle
-                    aktif_analizler[analiz_id] = {
+                    # Unique ID ile analizi kaydet
+                    bulunan_analizler[analiz_id] = {
+                        'klasor_adi': klasor_adi,  # Gerçek klasör adı
                         'params': {
                             'id': analiz_id,
                             'file_ids': ['bilinmeyen_dosya.json'],
@@ -112,7 +145,7 @@ def demo_analiz_ekle():
                             'lda_konu_sayisi': 5,
                             'batch_size': 16,
                             'baslangic_tarihi': baslangic_tarihi,
-                            'analysis_name': _extract_dataset_name_from_folder(analiz_id),  # Klasör adından proje ismini çıkar
+                            'analysis_name': _extract_dataset_name_from_folder(klasor_adi),  # Doğru isim
                             'tweet_sayisi': tweet_sayisi
                         },
                         'durum': 'tamamlandı',
@@ -124,7 +157,10 @@ def demo_analiz_ekle():
                         'tweet_sayisi': tweet_sayisi
                     }
                     
-                    print(f"✅ Mevcut analiz yüklendi: {analiz_id}")
+                    print(f"✅ Mevcut analiz yüklendi: {analiz_id} -> {_extract_dataset_name_from_folder(klasor_adi)} (klasör: {klasor_adi})")
+            
+            # Aktif analizleri güncelle (duplikasyonları önleyerek)
+            aktif_analizler.update(bulunan_analizler)
     
     except Exception as e:
         print(f"⚠️ Mevcut analizler yüklenirken hata: {e}")
@@ -416,8 +452,87 @@ def analiz_baslat():
         elif file_ids and not isinstance(file_ids, list):
             file_ids = [file_ids]
         
-        # Analiz ID'si oluştur
-        analiz_id = str(uuid.uuid4())
+        # Benzersiz analiz ID'si oluştur (duplikasyon önleme)
+        max_attempts = 10
+        analiz_id = None
+        
+        for attempt in range(max_attempts):
+            temp_id = str(uuid.uuid4())[:8]  # Kısa UUID (8 karakter)
+            
+            # Bu ID zaten kullanılıyor mu kontrol et
+            if temp_id not in aktif_analizler:
+                # Dosya sisteminde de bu ID ile klasör var mı kontrol et
+                sonuclar_path = current_app.config['SONUCLAR_FOLDER']
+                id_kullaniliyor = False
+                
+                for klasor in sonuclar_path.iterdir():
+                    if klasor.is_dir() and (temp_id in klasor.name or klasor.name.endswith(f'_{temp_id}')):
+                        id_kullaniliyor = True
+                        break
+                
+                if not id_kullaniliyor:
+                    analiz_id = temp_id
+                    print(f"✅ Benzersiz analiz ID oluşturuldu: {analiz_id}")
+                    break
+        
+        if not analiz_id:
+            return jsonify({
+                'success': False,
+                'error': 'Benzersiz analiz ID oluşturulamadı'
+            }), 500
+        
+        # Dosya isimlerinden veri seti ismini çıkar
+        veri_set_isimleri = []
+        tweet_arsivleri_path = current_app.config['TWEET_ARSIVLERI_FOLDER']
+        
+        for file_id_item in file_ids:
+            try:
+                # Dosya adından veri seti ismini çıkar
+                if file_id_item.endswith('.json'):
+                    veri_set_ismi = file_id_item.replace('.json', '').replace('_tweets', '')
+                    veri_set_isimleri.append(veri_set_ismi)
+                else:
+                    # Dosya yolundan isim çıkarmaya çalış
+                    for dosya in tweet_arsivleri_path.glob('*.json'):
+                        if dosya.name == file_id_item or str(uuid.uuid5(uuid.NAMESPACE_DNS, str(dosya))) == file_id_item:
+                            veri_set_ismi = dosya.stem.replace('_tweets', '')
+                            veri_set_isimleri.append(veri_set_ismi)
+                            break
+            except:
+                veri_set_isimleri.append('veri')
+        
+        # Analiz ismini belirle
+        if data.get('analysis_name'):
+            # Kullanıcı manuel bir isim verdiyse onu kullan
+            analysis_name = data.get('analysis_name')
+            print(f"📝 Kullanıcı tanımlı analiz ismi: {analysis_name}")
+        else:
+            # Veri seti isimlerinden otomatik oluştur
+            if len(veri_set_isimleri) == 0:
+                analysis_name = f'Analiz {analiz_id}'
+            elif len(veri_set_isimleri) == 1:
+                veri_set_str = veri_set_isimleri[0]
+                # Özel isim çevirileri
+                if veri_set_str == 'MMA101Turkiye':
+                    analysis_name = "MMA101Türkiye Twitter Analizi"
+                elif veri_set_str == 'AliYerlikaya':
+                    analysis_name = "Ali Yerlikaya Twitter Analizi"
+                elif veri_set_str == 'eczozgurozel':
+                    analysis_name = "Eczacı Özgür Özel Twitter Analizi"
+                elif veri_set_str == 'gidadedektifiTR':
+                    analysis_name = "Gıda Dedektifi Twitter Analizi"
+                elif veri_set_str == 'test':
+                    analysis_name = "Test Twitter Analizi"
+                else:
+                    analysis_name = f"{veri_set_str} Twitter Analizi"
+            else:
+                # Birden fazla veri seti varsa
+                veri_set_str = '_'.join(veri_set_isimleri[:2])
+                if len(veri_set_isimleri) > 2:
+                    veri_set_str += '_ve_diger'
+                analysis_name = f"{veri_set_str} Twitter Analizi"
+            
+            print(f"🏷️ Otomatik oluşturulan analiz ismi: {analysis_name}")
         
         # Analiz parametreleri
         analiz_params = {
@@ -429,9 +544,11 @@ def analiz_baslat():
             'batch_size': data.get('batch_size', current_app.config['DEFAULT_BATCH_SIZE']),
             'max_words': data.get('max_words', 200),
             'color_scheme': data.get('color_scheme', 'viridis'),
-            'analysis_name': data.get('analysis_name', f'analiz_{analiz_id[:8]}'),
+            'analysis_name': analysis_name,  # Doğru analiz ismi
             'baslangic_tarihi': datetime.now().isoformat()
         }
+        
+        print(f"🚀 Analiz başlatılıyor: ID={analiz_id}, İsim='{analysis_name}'")
         
         # Analizi aktif analizler listesine ekle
         aktif_analizler[analiz_id] = {
@@ -454,7 +571,8 @@ def analiz_baslat():
                         'durum': 'tamamlandı',
                         'mesaj': 'Analiz başarıyla tamamlandı',
                         'sonuclar': aktif_analizler[analiz_id].get('sonuclar', {}),
-                        'sure': aktif_analizler[analiz_id].get('sure', 'bilinmiyor')
+                        'sure': aktif_analizler[analiz_id].get('sure', 'bilinmiyor'),
+                        'analysis_name': analysis_name  # İsmi döndür
                     }
                 })
             else:
@@ -476,11 +594,13 @@ def analiz_baslat():
             'data': {
                 'analiz_id': analiz_id,
                 'durum': 'başlatıldı',
-                'mesaj': 'Analiz başarıyla başlatıldı'
+                'mesaj': 'Analiz başarıyla başlatıldı',
+                'analysis_name': analysis_name  # İsmi döndür
             }
         })
         
     except Exception as e:
+        print(f"❌ Analiz başlatma hatası: {e}")
         return jsonify({
             'success': False,
             'error': str(e)
@@ -502,8 +622,12 @@ def analiz_durumu(analiz_id):
         # Tweet sayısını al
         tweet_sayisi = analiz_info.get('tweet_sayisi') or params.get('tweet_sayisi', 246)
         
+        # Analiz ismini doğru şekilde al
+        analysis_name = params.get('analysis_name', f'Analiz {analiz_id}')
+        
         response_data = {
             'analiz_id': analiz_id,
+            'analiz_ismi': analysis_name,  # Analiz ismini ekle
             'durum': analiz_info['durum'],
             'ilerleme': analiz_info['ilerleme'],
             'baslangic_tarihi': analiz_info.get('baslangic_tarihi'),
@@ -601,7 +725,7 @@ def analiz_listesi():
             
             analiz_bilgisi = {
                 'id': analiz_id,
-                'name': params.get('analysis_name') or f'Analiz {analiz_id[:8]}',
+                'name': params.get('analysis_name') or _extract_dataset_name_from_folder(analiz_info.get('klasor_adi', analiz_id)),
                 'status': analiz_info.get('durum', 'bilinmiyor'),
                 'types': params.get('analiz_turleri', []),
                 'startDate': analiz_info.get('baslangic_tarihi'),
@@ -641,19 +765,39 @@ def _mevcut_analizleri_tara():
         
         print(f"🔍 Sonuçlar klasörü taranıyor: {sonuclar_path}")
         
+        # Mevcut analizleri unique ID ile kaydet
+        bulunan_analizler = {}
+        
         for analiz_klasoru in sonuclar_path.iterdir():
             if analiz_klasoru.is_dir():
-                analiz_id = analiz_klasoru.name
+                klasor_adi = analiz_klasoru.name
                 
                 # Gereksiz klasörleri filtrele
-                if analiz_id in ['lda_sonuclari', 'duygu_sonuclari', 'wordcloud_sonuclari']:
+                if klasor_adi in ['lda_sonuclari', 'duygu_sonuclari', 'wordcloud_sonuclari']:
                     continue
+                
+                # Klasör adından analiz_id'yi çıkar
+                # Format: safe_veri_set_analiz_turu_tarih_analiz_id (son 8 karakter)
+                if len(klasor_adi) >= 8:
+                    # Son 8 karakteri analiz ID olarak al
+                    parts = klasor_adi.split('_')
+                    if len(parts) >= 2:
+                        analiz_id = parts[-1]  # Son kısım analiz ID'si
+                    else:
+                        analiz_id = klasor_adi[-8:]  # Son 8 karakter
+                else:
+                    analiz_id = klasor_adi
                 
                 # Zaten aktif analizlerde varsa skip et
                 if analiz_id in aktif_analizler:
                     continue
                 
-                print(f"📊 Yeni analiz bulundu: {analiz_id}")
+                # Zaten bu ID'yi bulamazsa skip et (duplikasyon önleme)
+                if analiz_id in bulunan_analizler:
+                    print(f"⚠️ Duplikasyon tespit edildi, atlanıyor: {analiz_id} (klasör: {klasor_adi})")
+                    continue
+                
+                print(f"📊 Yeni analiz bulundu: {analiz_id} (klasör: {klasor_adi})")
                 
                 # Analiz türlerini belirle
                 analiz_turleri = []
@@ -662,23 +806,28 @@ def _mevcut_analizleri_tara():
                 if (analiz_klasoru / 'lda').exists():
                     analiz_turleri.append('lda')
                     sonuclar['lda'] = {
-                        'klasor': f'sonuclar/{analiz_id}/lda',
+                        'klasor': f'sonuclar/{klasor_adi}/lda',
                         'durum': 'tamamlandı'
                     }
                 
                 if (analiz_klasoru / 'sentiment').exists():
                     analiz_turleri.append('sentiment')
                     sonuclar['sentiment'] = {
-                        'klasor': f'sonuclar/{analiz_id}/sentiment',
+                        'klasor': f'sonuclar/{klasor_adi}/sentiment',
                         'durum': 'tamamlandı'
                     }
                 
                 if (analiz_klasoru / 'wordcloud').exists():
                     analiz_turleri.append('wordcloud')
                     sonuclar['wordcloud'] = {
-                        'klasor': f'sonuclar/{analiz_id}/wordcloud',
+                        'klasor': f'sonuclar/{klasor_adi}/wordcloud',
                         'durum': 'tamamlandı'
                     }
+                
+                # Hiçbir analiz türü bulunamazsa skip et
+                if not analiz_turleri:
+                    print(f"⚠️ Analiz türü bulunamadı, atlanıyor: {klasor_adi}")
+                    continue
                 
                 # Klasör oluşturma tarihini al
                 try:
@@ -707,18 +856,19 @@ def _mevcut_analizleri_tara():
                         import pandas as pd
                         df = pd.read_csv(lda_csv)
                         tweet_sayisi = len(df)
-                        print(f"📄 {analiz_id[:8]} - LDA CSV'den tweet sayısı: {tweet_sayisi}")
+                        print(f"📄 {analiz_id} - LDA CSV'den tweet sayısı: {tweet_sayisi}")
                     # Sentiment CSV'sinden de kontrol et
                     elif (analiz_klasoru / 'sentiment' / 'duygu_analizi_sonuclari.csv').exists():
                         sentiment_csv = analiz_klasoru / 'sentiment' / 'duygu_analizi_sonuclari.csv'
                         df = pd.read_csv(sentiment_csv)
                         tweet_sayisi = len(df)
-                        print(f"📄 {analiz_id[:8]} - Sentiment CSV'den tweet sayısı: {tweet_sayisi}")
+                        print(f"📄 {analiz_id} - Sentiment CSV'den tweet sayısı: {tweet_sayisi}")
                 except Exception as e:
-                    print(f"⚠️ {analiz_id[:8]} - Tweet sayısı hesaplama hatası: {e}")
+                    print(f"⚠️ {analiz_id} - Tweet sayısı hesaplama hatası: {e}")
                 
-                # Aktif analizlere ekle
-                aktif_analizler[analiz_id] = {
+                # Unique ID ile analizi kaydet
+                bulunan_analizler[analiz_id] = {
+                    'klasor_adi': klasor_adi,  # Gerçek klasör adı
                     'params': {
                         'id': analiz_id,
                         'file_ids': ['bilinmeyen_dosya.json'],
@@ -726,7 +876,7 @@ def _mevcut_analizleri_tara():
                         'lda_konu_sayisi': 5,
                         'batch_size': 16,
                         'baslangic_tarihi': baslangic_tarihi,
-                        'analysis_name': _extract_dataset_name_from_folder(analiz_id),  # Klasör adından proje ismini çıkar
+                        'analysis_name': _extract_dataset_name_from_folder(klasor_adi),  # Doğru isim
                         'tweet_sayisi': tweet_sayisi
                     },
                     'durum': 'tamamlandı',
@@ -738,7 +888,10 @@ def _mevcut_analizleri_tara():
                     'tweet_sayisi': tweet_sayisi
                 }
                 
-                print(f"✅ Analiz aktif listeye eklendi: {analiz_id}")
+                print(f"✅ Mevcut analiz yüklendi: {analiz_id} -> {_extract_dataset_name_from_folder(klasor_adi)} (klasör: {klasor_adi})")
+        
+        # Aktif analizleri güncelle (duplikasyonları önleyerek)
+        aktif_analizler.update(bulunan_analizler)
         
         print(f"✅ Tarama tamamlandı. Toplam aktif analiz: {len(aktif_analizler)}")
     
@@ -783,88 +936,105 @@ def analiz_sonuclari(analiz_id):
 @analiz_bp.route('/sonuc-dosyasi/<analiz_id>/<path:dosya_adi>')
 def analiz_sonuc_dosyasi(analiz_id, dosya_adi):
     """Belirtilen analize ait bir sonuç dosyasını sunar."""
-    
-    # Güvenlik: analiz_id ve dosya_adi üzerinde doğrulama yapılmalı
-    # Örn: Sadece izin verilen karakterler, ../ içermemeli vb.
-    if not analiz_id or not dosya_adi:
-        return jsonify({"success": False, "error": "Analiz ID ve dosya adı gerekli"}), 400
-
-    # Temel güvenlik kontrolü: Path traversal saldırılarını engellemek için
-    # dosya_adi içinde '..' olmamasını sağla
-    if '..' in dosya_adi or '..' in analiz_id:
-        return jsonify({"success": False, "error": "Geçersiz dosya yolu"}), 400
-
-    # Flask uygulamasının ana dizinini al
-    # app_root = Path(current_app.root_path).parent # Eğer app klasörü içindeyse
-    app_root = Path(current_app.root_path) # Eğer app klasörü projenin kök diziniyse
-    
-    # Gerçek dosya yolunu oluştur
-    # Önemli: Bu yol, sunucunuzun dosya sistemi yapısına göre ayarlanmalı
-    # Örnek olarak: sonuclar/<analiz_id>/<alt_klasor_eger_varsa>/<dosya_adi>
-    # dosya_adi artık 'lda/konu_dagilimi.png' gibi olabilir.
-    
-    # Analiz klasörünü ID ile başlayarak bul
-    sonuclar_klasoru = current_app.config['SONUCLAR_FOLDER']
-    analiz_klasor_yolu = None
-    
-    # Önce tam eşleşme ara
-    for klasor in sonuclar_klasoru.iterdir():
-        if klasor.is_dir() and klasor.name == analiz_id:
-            analiz_klasor_yolu = klasor
-            break
-    
-    # Tam eşleşme yoksa, ID'yi içeren klasör ara
-    if not analiz_klasor_yolu:
-        for klasor in sonuclar_klasoru.iterdir():
-            if klasor.is_dir() and analiz_id in klasor.name:
-                analiz_klasor_yolu = klasor
-                break
-    
-    # Hala bulamazsa, kısa ID ile ara (ilk 8 karakter)
-    if not analiz_klasor_yolu and len(analiz_id) >= 8:
-        kisa_id = analiz_id[:8]
-        for klasor in sonuclar_klasoru.iterdir():
-            if klasor.is_dir() and kisa_id in klasor.name:
-                analiz_klasor_yolu = klasor
-                break
-    
-    if not analiz_klasor_yolu:
-        # Son çare: analiz_id'nin sonunda analiz ID'si bulunan klasörleri ara
-        for klasor in sonuclar_klasoru.iterdir():
-            if klasor.is_dir() and klasor.name.endswith(analiz_id[-8:]) if len(analiz_id) >= 8 else False:
-                analiz_klasor_yolu = klasor
-                break
-    
-    if not analiz_klasor_yolu:
-        return jsonify({"success": False, "error": "Analiz klasörü bulunamadı"}), 404
-
-    # dosya_adi'ndan klasör ve dosya adını ayır
     try:
-        path_obj = Path(dosya_adi)
-        filename = path_obj.name
-        directory_relative_to_analiz_folder = path_obj.parent
+        print(f"📄 Dosya isteniyor: {analiz_id}/{dosya_adi}")
         
-        # İstenen dosyanın bulunduğu tam klasör yolu
-        # Örn: VeriCekmeDahilEtme/sonuclar/analiz_klasor_adi/lda
-        target_directory_full_path = analiz_klasor_yolu / directory_relative_to_analiz_folder
+        # Sonuçlar klasörünü al
+        sonuclar_klasoru = current_app.config['SONUCLAR_FOLDER']
         
-        # Debug için yolları yazdır
-        print(f"🔍 [analiz_sonuc_dosyasi] analiz_id: {analiz_id}")
-        print(f"🔍 [analiz_sonuc_dosyasi] analiz_klasor_yolu: {analiz_klasor_yolu}")
-        print(f"🔍 [analiz_sonuc_dosyasi] dosya_adi (gelen): {dosya_adi}")
-        print(f"🔍 [analiz_sonuc_dosyasi] filename: {filename}")
-        print(f"🔍 [analiz_sonuc_dosyasi] target_directory_full_path: {str(target_directory_full_path)}")
+        # Analiz klasörünü bul (gelişmiş arama)
+        analiz_klasor_yolu = None
+        
+        # 1. Önce aktif_analizler'den gerçek klasör adını al
+        if analiz_id in aktif_analizler:
+            analiz_info = aktif_analizler[analiz_id]
+            if 'klasor_adi' in analiz_info:
+                potansiyel_klasor = sonuclar_klasoru / analiz_info['klasor_adi']
+                if potansiyel_klasor.exists():
+                    analiz_klasor_yolu = potansiyel_klasor
+                    print(f"✅ Klasör aktif_analizler'den bulundu: {analiz_info['klasor_adi']}")
+        
+        # 2. Doğrudan analiz_id ile klasör ara
+        if not analiz_klasor_yolu:
+            potansiyel_klasor = sonuclar_klasoru / analiz_id
+            if potansiyel_klasor.exists():
+                analiz_klasor_yolu = potansiyel_klasor
+                print(f"✅ Doğrudan klasör bulundu: {analiz_id}")
+        
+        # 3. Analiz ID'nin sonunda olduğu klasörleri ara
+        if not analiz_klasor_yolu:
+            for klasor in sonuclar_klasoru.iterdir():
+                if klasor.is_dir():
+                    # Klasör adı analiz_id ile bitiyorsa
+                    if klasor.name.endswith(f'_{analiz_id}'):
+                        analiz_klasor_yolu = klasor
+                        print(f"✅ Son ek ile klasör bulundu: {klasor.name}")
+                        break
+                    # Veya klasör adında analiz_id geçiyorsa
+                    elif analiz_id in klasor.name:
+                        analiz_klasor_yolu = klasor
+                        print(f"✅ İçerik ile klasör bulundu: {klasor.name}")
+                        break
+        
+        # 4. Kısa ID ile ara (ilk 8 karakter)
+        if not analiz_klasor_yolu and len(analiz_id) >= 8:
+            kisa_id = analiz_id[:8]
+            for klasor in sonuclar_klasoru.iterdir():
+                if klasor.is_dir() and kisa_id in klasor.name:
+                    analiz_klasor_yolu = klasor
+                    print(f"✅ Kısa ID ile klasör bulundu: {klasor.name}")
+                    break
+        
+        if not analiz_klasor_yolu:
+            print(f"❌ Analiz klasörü bulunamadı: {analiz_id}")
+            print(f"📁 Mevcut klasörler:")
+            for klasor in sonuclar_klasoru.iterdir():
+                if klasor.is_dir():
+                    print(f"  - {klasor.name}")
+            return jsonify({"success": False, "error": "Analiz klasörü bulunamadı"}), 404
 
-        if not target_directory_full_path.exists() or not (target_directory_full_path / filename).is_file():
-            print(f"❌ Dosya bulunamadı: {target_directory_full_path / filename}")
-            return jsonify({"success": False, "error": f"Dosya bulunamadı: {dosya_adi}"}), 404
-
-        # dosyayı gönder
-        return send_from_directory(str(target_directory_full_path), filename)
-    
+        # dosya_adi'ndan klasör ve dosya adını ayır
+        try:
+            dosya_yolu = analiz_klasor_yolu / dosya_adi
+            
+            print(f"🔍 Aranan dosya yolu: {dosya_yolu}")
+            
+            if not dosya_yolu.exists():
+                print(f"❌ Dosya bulunamadı: {dosya_yolu}")
+                print(f"📁 Mevcut dosyalar:")
+                for root, dirs, files in os.walk(analiz_klasor_yolu):
+                    for file in files:
+                        rel_path = os.path.relpath(os.path.join(root, file), analiz_klasor_yolu)
+                        print(f"  - {rel_path}")
+                return jsonify({"success": False, "error": "Dosya bulunamadı"}), 404
+            
+            if dosya_yolu.is_file():
+                # MIME türünü belirle
+                mimetype, _ = mimetypes.guess_type(str(dosya_yolu))
+                if mimetype is None:
+                    if dosya_adi.endswith('.html'):
+                        mimetype = 'text/html'
+                    elif dosya_adi.endswith('.csv'):
+                        mimetype = 'text/csv'
+                    elif dosya_adi.endswith('.png'):
+                        mimetype = 'image/png'
+                    elif dosya_adi.endswith('.jpg') or dosya_adi.endswith('.jpeg'):
+                        mimetype = 'image/jpeg'
+                    else:
+                        mimetype = 'application/octet-stream'
+                
+                print(f"✅ Dosya bulundu: {dosya_yolu} (MIME: {mimetype})")
+                return send_file(dosya_yolu, mimetype=mimetype)
+            else:
+                return jsonify({"success": False, "error": "Bu bir dosya değil"}), 404
+        
+        except Exception as e:
+            print(f"❌ Dosya servis hatası: {e}")
+            return jsonify({"success": False, "error": f"Dosya servisi hatası: {str(e)}"}), 500
+            
     except Exception as e:
-        print(f"💥 Dosya sunulurken hata: {e}")
-        return jsonify({"success": False, "error": f"Dosya sunulurken hata: {str(e)}"}), 500
+        print(f"❌ Genel dosya servisi hatası: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @analiz_bp.route('/zip-indir/<analiz_id>', methods=['POST'])
 def analiz_zip_indir(analiz_id):
@@ -875,18 +1045,45 @@ def analiz_zip_indir(analiz_id):
         import os
         from flask import send_file
         
-        # Analiz ID'si ile eşleşen klasörü bul (tam eşleşme veya içerme)
+        print(f"📦 ZIP indirme isteniyor: {analiz_id}")
+        
+        # Analiz klasörünü gelişmiş yöntemle bul
         sonuclar_klasoru = current_app.config['SONUCLAR_FOLDER']
-        analiz_klasoru = None
+        analiz_klasor_yolu = None
         
-        for klasor in sonuclar_klasoru.iterdir():
-            if klasor.is_dir():
-                # Analiz ID'si klasör adında varsa 
-                if analiz_id in klasor.name or klasor.name.startswith(analiz_id):
-                    analiz_klasoru = klasor
-                    break
+        # 1. Önce aktif_analizler'den gerçek klasör adını al
+        if analiz_id in aktif_analizler:
+            analiz_info = aktif_analizler[analiz_id]
+            if 'klasor_adi' in analiz_info:
+                potansiyel_klasor = sonuclar_klasoru / analiz_info['klasor_adi']
+                if potansiyel_klasor.exists():
+                    analiz_klasor_yolu = potansiyel_klasor
+                    print(f"✅ ZIP - Klasör aktif_analizler'den bulundu: {analiz_info['klasor_adi']}")
         
-        if not analiz_klasoru:
+        # 2. Doğrudan analiz_id ile klasör ara
+        if not analiz_klasor_yolu:
+            potansiyel_klasor = sonuclar_klasoru / analiz_id
+            if potansiyel_klasor.exists():
+                analiz_klasor_yolu = potansiyel_klasor
+                print(f"✅ ZIP - Doğrudan klasör bulundu: {analiz_id}")
+        
+        # 3. Analiz ID'nin sonunda olduğu klasörleri ara
+        if not analiz_klasor_yolu:
+            for klasor in sonuclar_klasoru.iterdir():
+                if klasor.is_dir():
+                    # Klasör adı analiz_id ile bitiyorsa
+                    if klasor.name.endswith(f'_{analiz_id}'):
+                        analiz_klasor_yolu = klasor
+                        print(f"✅ ZIP - Son ek ile klasör bulundu: {klasor.name}")
+                        break
+                    # Veya klasör adında analiz_id geçiyorsa
+                    elif analiz_id in klasor.name:
+                        analiz_klasor_yolu = klasor
+                        print(f"✅ ZIP - İçerik ile klasör bulundu: {klasor.name}")
+                        break
+        
+        if not analiz_klasor_yolu:
+            print(f"❌ ZIP - Analiz klasörü bulunamadı: {analiz_id}")
             return jsonify({'success': False, 'error': 'Analiz klasörü bulunamadı'}), 404
         
         # ZIP dosyası oluştur
@@ -894,18 +1091,20 @@ def analiz_zip_indir(analiz_id):
         
         with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
             # Tüm dosyaları zip'e ekle
-            for root, dirs, files in os.walk(analiz_klasoru):
+            for root, dirs, files in os.walk(analiz_klasor_yolu):
                 for file in files:
                     file_path = os.path.join(root, file)
                     # Klasör yapısını koru
-                    arcname = os.path.relpath(file_path, analiz_klasoru)
+                    arcname = os.path.relpath(file_path, analiz_klasor_yolu)
                     zip_file.write(file_path, arcname)
         
         zip_buffer.seek(0)
         
         # Dosya adını klasör adından oluştur
-        analiz_adi = _extract_dataset_name_from_folder(analiz_klasoru.name)
+        analiz_adi = _extract_dataset_name_from_folder(analiz_klasor_yolu.name)
         dosya_adi = f'{analiz_adi}_analiz_sonuclari.zip'
+        
+        print(f"✅ ZIP oluşturuldu: {dosya_adi}")
         
         return send_file(
             zip_buffer,
@@ -949,18 +1148,38 @@ def analiz_pdf_rapor(analiz_id):
         sonuclar_klasoru = current_app.config['SONUCLAR_FOLDER']
         analiz_klasor_yolu = None
         
-        for klasor in sonuclar_klasoru.iterdir():
-            if klasor.is_dir():
-                # Klasör adının sonunda analiz ID'si var mı kontrol et
-                if analiz_id in klasor.name or klasor.name.startswith(analiz_id):
-                    analiz_klasor_yolu = klasor
-                    break
+        # 1. Önce aktif_analizler'den gerçek klasör adını al
+        if 'klasor_adi' in analiz_info:
+            potansiyel_klasor = sonuclar_klasoru / analiz_info['klasor_adi']
+            if potansiyel_klasor.exists():
+                analiz_klasor_yolu = potansiyel_klasor
+                print(f"✅ PDF - Klasör aktif_analizler'den bulundu: {analiz_info['klasor_adi']}")
+        
+        # 2. Doğrudan analiz_id ile klasör ara
+        if not analiz_klasor_yolu:
+            potansiyel_klasor = sonuclar_klasoru / analiz_id
+            if potansiyel_klasor.exists():
+                analiz_klasor_yolu = potansiyel_klasor
+                print(f"✅ PDF - Doğrudan klasör bulundu: {analiz_id}")
+        
+        # 3. Analiz ID'nin sonunda olduğu klasörleri ara
+        if not analiz_klasor_yolu:
+            for klasor in sonuclar_klasoru.iterdir():
+                if klasor.is_dir():
+                    # Klasör adı analiz_id ile bitiyorsa
+                    if klasor.name.endswith(f'_{analiz_id}'):
+                        analiz_klasor_yolu = klasor
+                        print(f"✅ PDF - Son ek ile klasör bulundu: {klasor.name}")
+                        break
+                    # Veya klasör adında analiz_id geçiyorsa
+                    elif analiz_id in klasor.name:
+                        analiz_klasor_yolu = klasor
+                        print(f"✅ PDF - İçerik ile klasör bulundu: {klasor.name}")
+                        break
         
         if not analiz_klasor_yolu:
-            # Fallback: doğrudan analiz_id klasörü
-            analiz_klasor_yolu = sonuclar_klasoru / analiz_id
-            if not analiz_klasor_yolu.exists():
-                return jsonify({"success": False, "error": "Analiz klasörü bulunamadı"}), 404
+            print(f"❌ PDF - Analiz klasörü bulunamadı: {analiz_id}")
+            return jsonify({"success": False, "error": "Analiz klasörü bulunamadı"}), 404
 
         print(f"📊 Analiz klasörü bulundu: {analiz_klasor_yolu}")
 
@@ -1245,10 +1464,11 @@ def _extract_dataset_name_from_folder(folder_name):
     """Klasör adından dataset ismini çıkar"""
     try:
         # Format örnekleri:
-        # AliYerlikaya_tweetle_LDA_Duygu_Kelime_29052025_0532_cdea0bb3
-        # gidadedektifiTR_twee_LDA_Duygu_Kelime_28052025_2341_878021ce
+        # MMA101Turkiye_tweetl_LDA_Duygu_Kelime_29052025_0640_d25bac99
+        # AliYerlikaya_tweetle_LDA_Duygu_Kelime_29052025_0550_1fea9334
         # test_LDA_Duygu_Kelime_29052025_0548_e909d8ff
-        # Konu-Duygu-Kelime_Analizi_29052025_0532
+        
+        print(f"🔍 Dataset ismi çıkarılıyor: {folder_name}")
         
         # Önce '_' ile böl
         parts = folder_name.split('_')
@@ -1257,53 +1477,50 @@ def _extract_dataset_name_from_folder(folder_name):
             # İlk parça dataset ismidir
             dataset_name = parts[0]
             
-            # UUID formatındaki klasörler için özel işlem
-            if len(dataset_name) > 20 and '-' in dataset_name:
-                # UUID formatı, ikinci parçayı al
-                if len(parts) >= 2:
-                    dataset_name = parts[1]
-                else:
-                    return "Twitter Analizi"
+            print(f"📝 Bulunan dataset ismi: '{dataset_name}'")
             
-            # Eğer dataset ismi çok kısa, sayısal veya UUID ise alternatif yöntemler
-            if len(dataset_name) < 3 or dataset_name.isdigit() or len(dataset_name.replace('-', '')) == 32:
-                # Klasör adından daha akıllı çıkarım
-                if 'Konu-Duygu-Kelime' in folder_name:
-                    return "Konu-Duygu-Kelime Analizi"
-                elif 'AliYerlikaya' in folder_name:
-                    return "Ali Yerlikaya Analizi"
-                elif 'gidadedektifi' in folder_name:
-                    return "Gıda Dedektifi Analizi"
-                elif 'varank' in folder_name:
-                    return "Varank Analizi"
-                elif 'test' in folder_name.lower():
-                    return "Test Analizi"
-                else:
-                    return "Twitter Analizi"
+            # Özel durum kontrolları
+            if dataset_name == 'MMA101Turkiye':
+                return "MMA101Türkiye Twitter Analizi"
+            elif dataset_name == 'AliYerlikaya':
+                return "Ali Yerlikaya Twitter Analizi"
+            elif dataset_name == 'eczozgurozel':
+                return "Eczacı Özgür Özel Twitter Analizi"
+            elif dataset_name == 'gidadedektifiTR':
+                return "Gıda Dedektifi Twitter Analizi"
+            elif dataset_name == 'test':
+                return "Test Twitter Analizi"
+            elif dataset_name.lower().startswith('konu'):
+                return "Konu-Duygu-Kelime Analizi"
             
-            # Özel isimleri düzelt
-            if dataset_name.lower() == 'aliyerlikaya':
-                return "Ali Yerlikaya Analizi"
-            elif dataset_name.lower() == 'gidadedektifitr':
-                return "Gıda Dedektifi Analizi"
-            elif dataset_name.lower() == 'varank':
-                return "Varank Analizi"
-            elif dataset_name.lower() == 'test':
-                return "Test Analizi"
-            elif dataset_name.lower().startswith('ali') and len(dataset_name) > 3:
-                return "Ali Yerlikaya Analizi"
-            
-            # Camel case'e çevir veya düzelt
-            if dataset_name.islower() or dataset_name.isupper():
-                dataset_name = dataset_name.capitalize()
-            
-            # Eğer hala çok kısa ise "Analizi" ekle
-            if len(dataset_name) <= 4:
-                return f"{dataset_name} Analizi"
-            else:
+            # Genel formatla: İsim + "Twitter Analizi"
+            if len(dataset_name) > 2 and not dataset_name.isdigit():
+                # CamelCase veya snake_case'i düzelt
+                if dataset_name.isupper():
+                    dataset_name = dataset_name.capitalize()
+                elif '_' in dataset_name:
+                    dataset_name = dataset_name.replace('_', ' ').title()
+                elif not dataset_name[0].isupper():
+                    dataset_name = dataset_name.capitalize()
+                
                 return f"{dataset_name} Twitter Analizi"
             
+        # Fallback: Klasör adından akıllı çıkarım
+        if 'MMA101' in folder_name:
+            return "MMA101Türkiye Twitter Analizi"
+        elif 'Ali' in folder_name or 'yerlikaya' in folder_name.lower():
+            return "Ali Yerlikaya Twitter Analizi"
+        elif 'ecz' in folder_name.lower() or 'ozel' in folder_name.lower():
+            return "Eczacı Özgür Özel Twitter Analizi"
+        elif 'gida' in folder_name.lower():
+            return "Gıda Dedektifi Twitter Analizi"
+        elif 'test' in folder_name.lower():
+            return "Test Twitter Analizi"
+        elif 'konu' in folder_name.lower():
+            return "Konu-Duygu-Kelime Analizi"
+        
         return "Twitter Analizi"
+        
     except Exception as e:
         print(f"⚠️ Dataset ismi çıkarma hatası: {e}")
         return "Twitter Analizi"
@@ -1390,22 +1607,42 @@ def analiz_istatistikleri(analiz_id):
         if analiz_verisi['durum'] != 'tamamlandı':
             return jsonify({"success": False, "error": "Analiz henüz tamamlanmadı"}), 202 # Accepted
 
-        # Analiz klasörünü ID ile başlayarak bul
+        # Analiz klasörünü gelişmiş yöntemle bul
         sonuclar_klasoru = current_app.config['SONUCLAR_FOLDER']
         analiz_klasor_yolu = None
         
-        for klasor in sonuclar_klasoru.iterdir():
-            if klasor.is_dir():
-                # Klasör adının sonunda analiz ID'si var mı kontrol et
-                if analiz_id in klasor.name or klasor.name.startswith(analiz_id):
-                    analiz_klasor_yolu = klasor
-                    break
+        # 1. Önce aktif_analizler'den gerçek klasör adını al
+        if 'klasor_adi' in analiz_verisi:
+            potansiyel_klasor = sonuclar_klasoru / analiz_verisi['klasor_adi']
+            if potansiyel_klasor.exists():
+                analiz_klasor_yolu = potansiyel_klasor
+                print(f"✅ İstatistik - Klasör aktif_analizler'den bulundu: {analiz_verisi['klasor_adi']}")
+        
+        # 2. Doğrudan analiz_id ile klasör ara
+        if not analiz_klasor_yolu:
+            potansiyel_klasor = sonuclar_klasoru / analiz_id
+            if potansiyel_klasor.exists():
+                analiz_klasor_yolu = potansiyel_klasor
+                print(f"✅ İstatistik - Doğrudan klasör bulundu: {analiz_id}")
+        
+        # 3. Analiz ID'nin sonunda olduğu klasörleri ara
+        if not analiz_klasor_yolu:
+            for klasor in sonuclar_klasoru.iterdir():
+                if klasor.is_dir():
+                    # Klasör adı analiz_id ile bitiyorsa
+                    if klasor.name.endswith(f'_{analiz_id}'):
+                        analiz_klasor_yolu = klasor
+                        print(f"✅ İstatistik - Son ek ile klasör bulundu: {klasor.name}")
+                        break
+                    # Veya klasör adında analiz_id geçiyorsa
+                    elif analiz_id in klasor.name:
+                        analiz_klasor_yolu = klasor
+                        print(f"✅ İstatistik - İçerik ile klasör bulundu: {klasor.name}")
+                        break
         
         if not analiz_klasor_yolu:
-            # Fallback: doğrudan analiz_id klasörü
-            analiz_klasor_yolu = sonuclar_klasoru / analiz_id
-            if not analiz_klasor_yolu.exists():
-                return jsonify({"success": False, "error": "Analiz klasörü bulunamadı"}), 404
+            print(f"❌ İstatistik - Analiz klasörü bulunamadı: {analiz_id}")
+            return jsonify({"success": False, "error": "Analiz klasörü bulunamadı"}), 404
 
         print(f"📊 Analiz klasörü bulundu: {analiz_klasor_yolu}")
 
@@ -1609,25 +1846,42 @@ def analiz_sil(analiz_id):
         import shutil
         import os
         
+        print(f"🗑️ Analiz silme isteniyor: {analiz_id}")
+        
         # Aktif analizlerden çıkar
         if analiz_id in aktif_analizler:
             del aktif_analizler[analiz_id]
             print(f"✅ Analiz aktif listeden çıkarıldı: {analiz_id}")
         
-        # Dosya sisteminden sil
+        # Dosya sisteminden sil - gelişmiş klasör bulma
         sonuclar_klasoru = current_app.config['SONUCLAR_FOLDER']
-        analiz_klasoru = None
+        analiz_klasor_yolu = None
         
         # Analiz klasörünü bul
         for klasor in sonuclar_klasoru.iterdir():
-            if klasor.is_dir() and klasor.name.startswith(analiz_id):
-                analiz_klasoru = klasor
-                break
+            if klasor.is_dir():
+                # Klasör adı analiz_id ile bitiyorsa
+                if klasor.name.endswith(f'_{analiz_id}'):
+                    analiz_klasor_yolu = klasor
+                    print(f"✅ Sil - Son ek ile klasör bulundu: {klasor.name}")
+                    break
+                # Veya klasör adında analiz_id geçiyorsa
+                elif analiz_id in klasor.name:
+                    analiz_klasor_yolu = klasor
+                    print(f"✅ Sil - İçerik ile klasör bulundu: {klasor.name}")
+                    break
+                # Veya doğrudan analiz_id eşleşiyorsa
+                elif klasor.name == analiz_id:
+                    analiz_klasor_yolu = klasor
+                    print(f"✅ Sil - Tam eşleşme ile klasör bulundu: {klasor.name}")
+                    break
         
-        if analiz_klasoru and analiz_klasoru.exists():
+        if analiz_klasor_yolu and analiz_klasor_yolu.exists():
             # Klasörü tamamen sil
-            shutil.rmtree(analiz_klasoru)
-            print(f"✅ Analiz klasörü silindi: {analiz_klasoru}")
+            shutil.rmtree(analiz_klasor_yolu)
+            print(f"✅ Analiz klasörü silindi: {analiz_klasor_yolu}")
+        else:
+            print(f"⚠️ Silinecek klasör bulunamadı: {analiz_id}")
         
         return jsonify({
             'success': True,

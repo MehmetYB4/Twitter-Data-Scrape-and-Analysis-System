@@ -454,9 +454,12 @@ function displayAnalysisDetails() {
     
     // Başlık ve durum
     const analysisParams = analysisData.params || {};
-    const analysisName = analysisParams.analysis_name || `Analiz ${analysisId.substring(0, 8)}`;
+    // Önce API'den gelen analiz_ismi'ni kontrol et, yoksa params'daki analysis_name'i kullan
+    const analysisName = analysisData.analiz_ismi || analysisParams.analysis_name || `Analiz ${analysisId.substring(0, 8)}`;
     const titleElement = document.getElementById('analysisTitle');
     if (titleElement) titleElement.textContent = analysisName;
+    
+    console.log('🏷️ Analiz ismi belirlendi:', analysisName);
     
     const statusBadge = document.getElementById('analysisStatusBadge');
     if (statusBadge) {
@@ -1138,76 +1141,264 @@ function refreshAnalysis() {
 }
 
 function viewLDADetails() {
-    const url = `/analiz/sonuc-dosyasi/${analysisId}/lda_visualization.html`;
-    window.open(url, '_blank');
+    console.log('📊 LDA detaylı görünümü açılıyor...');
+    
+    // LDA visualization dosyasını yeni sekmede aç
+    const ldaUrl = `/analiz/sonuc-dosyasi/${analysisId}/lda/lda_visualization.html`;
+    window.open(ldaUrl, '_blank');
+    
+    showAlert('info', 'LDA detaylı görünümü yeni sekmede açılıyor...');
 }
 
 function viewSentimentDetails() {
-    const url = `/analiz/sonuc-dosyasi/${analysisId}/duygu_dagilimi.png`;
-    window.open(url, '_blank');
-}
-
-function viewWordcloudDetails() {
-    const url = `/analiz/sonuc-dosyasi/${analysisId}/ana_kelime_bulutu.png`;
-    window.open(url, '_blank');
-}
-
-function copyShareLink() {
-    const shareUrl = `${window.location.origin}/analiz/sonuclar/${analysisId}`;
-    copyToClipboard(shareUrl);
-    showAlert('success', 'Bağlantı panoya kopyalandı!');
-}
-
-function shareViaEmail() {
-    const shareUrl = `${window.location.origin}/analiz/sonuclar/${analysisId}`;
-    const subject = encodeURIComponent('Twitter Analiz Sonucu');
-    const body = encodeURIComponent(`Merhaba,\n\nTwitter analiz sonucunu görüntülemek için aşağıdaki bağlantıyı kullanabilirsiniz:\n\n${shareUrl}\n\nİyi günler!`);
-    window.open(`mailto:?subject=${subject}&body=${body}`);
-}
-
-function exportToCloud() {
-    showAlert('info', 'Bulut yükleme özelliği yakında eklenecek.');
-}
-
-function downloadExcelReport() {
-    showAlert('info', 'Excel raporu indirme özelliği yakında eklenecek.');
-}
-
-function downloadPDFReport() {
-    showAlert('info', 'PDF raporu indirme özelliği yakında eklenecek.');
-}
-
-function downloadAllImages() {
-    showAlert('info', 'Tüm görselleri indirme özelliği yakında eklenecek.');
-}
-
-// Mock chart fonksiyonları
-function createMockLDAChart() {
-    const canvas = document.getElementById('ldaChart');
-    if (!canvas) return;
+    console.log('😊 Sentiment detaylı görünümü açılıyor...');
     
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#f8f9fa';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Modal oluşturarak detaylı sentiment verilerini göster
+    const modalHtml = `
+        <div class="modal fade" id="sentimentDetailModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-emoji-smile text-success"></i> Duygu Analizi Detayları
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="sentimentDetailContent">
+                            <div class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Yükleniyor...</span>
+                                </div>
+                                <p class="mt-2">Duygu analizi detayları yükleniyor...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                        <button type="button" class="btn btn-primary" onclick="downloadFile('sentiment/duygu_analizi_sonuclari.csv')">
+                            <i class="bi bi-download"></i> CSV İndir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
     
-    ctx.fillStyle = '#6c757d';
-    ctx.font = '16px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('LDA Görselleştirme Yükleniyor...', canvas.width/2, canvas.height/2);
+    // Modal'ı sayfaya ekle
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Modal'ı göster
+    const modal = new bootstrap.Modal(document.getElementById('sentimentDetailModal'));
+    modal.show();
+    
+    // Detaylı verileri yükle
+    loadSentimentDetailData();
+    
+    // Modal kapandığında temizle
+    document.getElementById('sentimentDetailModal').addEventListener('hidden.bs.modal', function () {
+        this.remove();
+    });
 }
 
-function createMockSentimentChart() {
-    const canvas = document.getElementById('sentimentChart');
-    if (!canvas) return;
+function loadSentimentDetailData() {
+    console.log('😊 Sentiment detay verileri API\'den alınıyor...');
     
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#f8f9fa';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    fetch(`/analiz/analiz-istatistikleri/${analysisId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`API HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.stats && data.stats.sentiment_detaylari) {
+                const sentimentStats = data.stats.sentiment_detaylari;
+                
+                console.log('😊 Sentiment detay verileri alındı:', sentimentStats);
+                
+                const content = document.getElementById('sentimentDetailContent');
+                
+                content.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-emoji-smile text-success"></i> Pozitif Tweet'ler</h6>
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <h3 class="text-success">${sentimentStats.pozitif.sayi}</h3>
+                                    <p class="mb-0">%${sentimentStats.pozitif.yuzde} Pozitif</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-emoji-frown text-danger"></i> Negatif Tweet'ler</h6>
+                            <div class="card border-danger">
+                                <div class="card-body text-center">
+                                    <h3 class="text-danger">${sentimentStats.negatif.sayi}</h3>
+                                    <p class="mb-0">%${sentimentStats.negatif.yuzde} Negatif</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <h6><i class="bi bi-emoji-neutral text-secondary"></i> Nötr Tweet'ler</h6>
+                            <div class="card border-secondary">
+                                <div class="card-body text-center">
+                                    <h3 class="text-secondary">${sentimentStats.notr.sayi}</h3>
+                                    <p class="mb-0">%${sentimentStats.notr.yuzde} Nötr</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <h6><i class="bi bi-bar-chart text-info"></i> Duygu Dağılım Özeti</h6>
+                        <div class="progress" style="height: 25px;">
+                            <div class="progress-bar bg-success" role="progressbar" 
+                                 style="width: ${sentimentStats.pozitif.yuzde}%" 
+                                 aria-valuenow="${sentimentStats.pozitif.yuzde}" 
+                                 aria-valuemin="0" aria-valuemax="100">
+                                Pozitif ${sentimentStats.pozitif.yuzde}%
+                            </div>
+                            <div class="progress-bar bg-secondary" role="progressbar" 
+                                 style="width: ${sentimentStats.notr.yuzde}%" 
+                                 aria-valuenow="${sentimentStats.notr.yuzde}" 
+                                 aria-valuemin="0" aria-valuemax="100">
+                                Nötr ${sentimentStats.notr.yuzde}%
+                            </div>
+                            <div class="progress-bar bg-danger" role="progressbar" 
+                                 style="width: ${sentimentStats.negatif.yuzde}%" 
+                                 aria-valuenow="${sentimentStats.negatif.yuzde}" 
+                                 aria-valuemin="0" aria-valuemax="100">
+                                Negatif ${sentimentStats.negatif.yuzde}%
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                console.log('✅ Sentiment detay modal içeriği yüklendi');
+                
+            } else {
+                throw new Error('Sentiment detay verileri bulunamadı');
+            }
+        })
+        .catch(error => {
+            console.error('❌ Sentiment detay yükleme hatası:', error);
+            
+            const content = document.getElementById('sentimentDetailContent');
+            content.innerHTML = `
+                <div class="text-center py-4">
+                    <i class="bi bi-exclamation-triangle text-warning display-4"></i>
+                    <h5 class="mt-3 text-muted">Detay Verileri Yüklenemedi</h5>
+                    <p class="text-muted">Duygu analizi detayları şu anda yüklenemiyor.</p>
+                    <button class="btn btn-outline-primary" onclick="downloadFile('sentiment/duygu_analizi_sonuclari.csv')">
+                        <i class="bi bi-download"></i> Ham Verileri İndir
+                    </button>
+                </div>
+            `;
+        });
+}
+
+function loadWordcloudResults(wordcloudData) {
+    console.log('☁️ Kelime bulutu sonuçları yükleniyor...', wordcloudData);
+    const content = document.getElementById('wordcloudContent');
     
-    ctx.fillStyle = '#6c757d';
-    ctx.font = '16px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText('Duygu Analizi Grafiği Yükleniyor...', canvas.width/2, canvas.height/2);
+    // Gerçek wordcloud istatistiklerini API'den çek
+    fetch(`/analiz/analiz-istatistikleri/${analysisId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`API HTTP ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.stats && data.stats.wordcloud_detaylari && data.stats.wordcloud_detaylari.length > 0) {
+                const wordcloudStats = data.stats.wordcloud_detaylari;
+                
+                console.log('☁️ Gerçek Wordcloud verileri alındı:', wordcloudStats);
+                
+                // Kelime listesi HTML'i oluştur
+                let wordsHtml = '';
+                wordcloudStats.slice(0, 15).forEach(kelime => {
+                    wordsHtml += `
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>${kelime.kelime}</span>
+                            <span class="badge bg-primary rounded-pill">${kelime.frekans}</span>
+                        </div>
+                    `;
+                });
+                
+                // Gerçek kelime bulutu resmi yolu
+                const wordcloudImageUrl = `/analiz/sonuc-dosyasi/${analysisId}/wordcloud/ana_kelime_bulutu.png`;
+                
+                content.innerHTML = `
+                    <div class="row">
+                        <div class="col-lg-8 mb-4">
+                            <h5><i class="bi bi-cloud text-info"></i> Kelime Bulutu</h5>
+                            <div class="text-center bg-light p-3 rounded">
+                                <img src="${wordcloudImageUrl}" 
+                                    alt="Kelime Bulutu" 
+                                    class="img-fluid" 
+                                    style="max-height: 400px; border-radius: 8px;"
+                                    onload="console.log('✅ Wordcloud resmi yüklendi')"
+                                    onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjhmOWZhIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI0NSUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzZjNzU3ZCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPktlbGltZSBCdWx1dHU8L3RleHQ+CiAgPHRleHQgeD0iNTAlIiB5PSI1NSUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPllWa2xlbml5b3I8L3RleHQ+PC9zdmc+'; console.log('❌ Wordcloud resmi yüklenemedi');">
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <h5><i class="bi bi-list-ol text-secondary"></i> En Sık Kelimeler</h5>
+                            <div class="list-group" style="max-height: 400px; overflow-y: auto;">
+                                ${wordsHtml}
+                            </div>
+                            <div class="mt-3">
+                                <button class="btn btn-outline-secondary btn-sm" onclick="downloadFile('wordcloud/en_sik_kelimeler.csv')">
+                                    <i class="bi bi-download"></i> CSV İndir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                console.log('✅ Dinamik Wordcloud sonuçları yüklendi');
+                
+            } else {
+                console.warn('⚠️ Wordcloud API verisi yok, basit görünüm yükleniyor');
+                // Sadece resmi yükle
+                const wordcloudImageUrl = `/analiz/sonuc-dosyasi/${analysisId}/wordcloud/ana_kelime_bulutu.png`;
+                
+                content.innerHTML = `
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <h5><i class="bi bi-cloud text-info"></i> Kelime Bulutu</h5>
+                            <div class="text-center bg-light p-3 rounded">
+                                <img src="${wordcloudImageUrl}" 
+                                    alt="Kelime Bulutu" 
+                                    class="img-fluid" 
+                                    style="max-height: 400px; border-radius: 8px;">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('❌ Wordcloud API hatası, basit resim yükleniyor:', error.message);
+            // Sadece resmi yükle
+            const wordcloudImageUrl = `/analiz/sonuc-dosyasi/${analysisId}/wordcloud/ana_kelime_bulutu.png`;
+            
+            content.innerHTML = `
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h5><i class="bi bi-cloud text-info"></i> Kelime Bulutu</h5>
+                        <div class="text-center bg-light p-3 rounded">
+                            <img src="${wordcloudImageUrl}" 
+                                alt="Kelime Bulutu" 
+                                class="img-fluid" 
+                                style="max-height: 400px; border-radius: 8px;">
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
 }
 
 function loadLDAResults(ldaData) {
@@ -1380,12 +1571,29 @@ function loadSentimentResults(sentimentData) {
                             <div class="list-group">
                                 <div class="list-group-item d-flex justify-content-between align-items-center">
                                     <div>
-                                        <h6 class="mb-1">Yükleniyor...</h6>
-                                        <small class="text-muted">Duygu verileri yükleniyor</small>
+                                        <h6 class="mb-1 text-success">😊 Pozitif</h6>
+                                        <small class="text-muted">${sentimentStats.pozitif.sayi} tweet</small>
                                     </div>
                                     <div class="text-end">
-                                        <span class="badge bg-secondary rounded-pill">-%</span>
-                                        <small class="d-block text-muted">- tweet</small>
+                                        <span class="badge bg-success rounded-pill">${sentimentStats.pozitif.yuzde}%</span>
+                                    </div>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1 text-danger">😢 Negatif</h6>
+                                        <small class="text-muted">${sentimentStats.negatif.sayi} tweet</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-danger rounded-pill">${sentimentStats.negatif.yuzde}%</span>
+                                    </div>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1 text-secondary">😐 Nötr</h6>
+                                        <small class="text-muted">${sentimentStats.notr.sayi} tweet</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-secondary rounded-pill">${sentimentStats.notr.yuzde}%</span>
                                     </div>
                                 </div>
                             </div>
@@ -1435,152 +1643,6 @@ function loadSentimentResults(sentimentData) {
                         <div class="text-center bg-light p-3 rounded">
                             <img src="${sentimentImageUrl}" 
                                 alt="Duygu Dağılımı" 
-                                class="img-fluid" 
-                                style="max-height: 400px; border-radius: 8px;">
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-}
-
-function loadSentimentResultsFallback() {
-    const content = document.getElementById('sentimentContent');
-    const sentimentImageUrl = `/analiz/sonuc-dosyasi/${analysisId}/sentiment/duygu_dagilimi.png`;
-    
-    content.innerHTML = `
-        <div class="row">
-            <div class="col-lg-8 mb-4">
-                <h5><i class="bi bi-emoji-smile text-success"></i> Duygu Dağılımı</h5>
-                <div class="text-center bg-light p-3 rounded">
-                    <img src="${sentimentImageUrl}" 
-                        alt="Duygu Dağılımı" 
-                        class="img-fluid" 
-                        style="max-height: 400px; border-radius: 8px;"
-                        onload="console.log('✅ Sentiment resmi yüklendi')"
-                        onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjhmOWZhIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI0NSUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzZjNzU3ZCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkR1eWd1IERhxJ9pxLFsaW08L3RleHQ+CiAgPHRleHQgeD0iNTAlIiB5PSI1NSUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPllWa2xlbml5b3I8L3RleHQ+PC9zdmc+'; console.log('❌ Sentiment resmi yüklenemedi, fallback gösteriliyor');">
-                </div>
-            </div>
-            <div class="col-lg-4">
-                <h5><i class="bi bi-bar-chart text-info"></i> Duygu İstatistikleri</h5>
-                <div class="list-group">
-                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-1">Yükleniyor...</h6>
-                            <small class="text-muted">Duygu verileri yükleniyor</small>
-                        </div>
-                        <div class="text-end">
-                            <span class="badge bg-secondary rounded-pill">-%</span>
-                            <small class="d-block text-muted">- tweet</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="mt-3">
-                    <button class="btn btn-outline-success btn-sm" onclick="viewSentimentDetails()">
-                        <i class="bi bi-eye"></i> Detaylı Görünüm
-                    </button>
-                    <button class="btn btn-outline-secondary btn-sm" onclick="downloadFile('sentiment/duygu_analizi_sonuclari.csv')">
-                        <i class="bi bi-download"></i> CSV İndir
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-}
-
-function loadWordcloudResults(wordcloudData) {
-    console.log('☁️ Kelime bulutu sonuçları yükleniyor...', wordcloudData);
-    const content = document.getElementById('wordcloudContent');
-    
-    // Gerçek wordcloud istatistiklerini API'den çek
-    fetch(`/analiz/analiz-istatistikleri/${analysisId}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`API HTTP ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success && data.stats && data.stats.wordcloud_detaylari && data.stats.wordcloud_detaylari.length > 0) {
-                const wordcloudStats = data.stats.wordcloud_detaylari;
-                
-                console.log('☁️ Gerçek Wordcloud verileri alındı:', wordcloudStats);
-                
-                // Kelime listesi HTML'i oluştur
-                let wordsHtml = '';
-                wordcloudStats.slice(0, 15).forEach(kelime => {
-                    wordsHtml += `
-                        <div class="list-group-item d-flex justify-content-between align-items-center">
-                            <span>${kelime.kelime}</span>
-                            <span class="badge bg-primary rounded-pill">${kelime.frekans}</span>
-                        </div>
-                    `;
-                });
-                
-                // Gerçek kelime bulutu resmi yolu
-                const wordcloudImageUrl = `/analiz/sonuc-dosyasi/${analysisId}/wordcloud/ana_kelime_bulutu.png`;
-                
-                content.innerHTML = `
-                    <div class="row">
-                        <div class="col-lg-8 mb-4">
-                            <h5><i class="bi bi-cloud text-info"></i> Kelime Bulutu</h5>
-                            <div class="text-center bg-light p-3 rounded">
-                                <img src="${wordcloudImageUrl}" 
-                                    alt="Kelime Bulutu" 
-                                    class="img-fluid" 
-                                    style="max-height: 400px; border-radius: 8px;"
-                                    onload="console.log('✅ Wordcloud resmi yüklendi')"
-                                    onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjhmOWZhIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI0NSUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzZjNzU3ZCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPktlbGltZSBCdWx1dHU8L3RleHQ+CiAgPHRleHQgeD0iNTAlIiB5PSI1NSUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzk5OTk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPllWa2xlbml5b3I8L3RleHQ+PC9zdmc+'; console.log('❌ Wordcloud resmi yüklenemedi');">
-                            </div>
-                        </div>
-                        <div class="col-lg-4">
-                            <h5><i class="bi bi-list-ol text-secondary"></i> En Sık Kelimeler</h5>
-                            <div class="list-group" style="max-height: 400px; overflow-y: auto;">
-                                ${wordsHtml}
-                            </div>
-                            <div class="mt-3">
-                                <button class="btn btn-outline-secondary btn-sm" onclick="downloadFile('wordcloud/en_sik_kelimeler.csv')">
-                                    <i class="bi bi-download"></i> CSV İndir
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                console.log('✅ Dinamik Wordcloud sonuçları yüklendi');
-                
-            } else {
-                console.warn('⚠️ Wordcloud API verisi yok, basit görünüm yükleniyor');
-                // Sadece resmi yükle
-                const wordcloudImageUrl = `/analiz/sonuc-dosyasi/${analysisId}/wordcloud/ana_kelime_bulutu.png`;
-                
-                content.innerHTML = `
-                    <div class="row">
-                        <div class="col-lg-12">
-                            <h5><i class="bi bi-cloud text-info"></i> Kelime Bulutu</h5>
-                            <div class="text-center bg-light p-3 rounded">
-                                <img src="${wordcloudImageUrl}" 
-                                    alt="Kelime Bulutu" 
-                                    class="img-fluid" 
-                                    style="max-height: 400px; border-radius: 8px;">
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-        })
-        .catch(error => {
-            console.error('❌ Wordcloud API hatası, basit resim yükleniyor:', error.message);
-            // Sadece resmi yükle
-            const wordcloudImageUrl = `/analiz/sonuc-dosyasi/${analysisId}/wordcloud/ana_kelime_bulutu.png`;
-            
-            content.innerHTML = `
-                <div class="row">
-                    <div class="col-lg-12">
-                        <h5><i class="bi bi-cloud text-info"></i> Kelime Bulutu</h5>
-                        <div class="text-center bg-light p-3 rounded">
-                            <img src="${wordcloudImageUrl}" 
-                                alt="Kelime Bulutu" 
                                 class="img-fluid" 
                                 style="max-height: 400px; border-radius: 8px;">
                         </div>
