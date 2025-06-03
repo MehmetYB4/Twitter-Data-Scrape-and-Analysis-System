@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block subtitle %}
-<p class="text-muted mb-0">Twitter verilerinizi analiz edin ve değerli bilgiler çıkarın</p>
+<p class="text-muted mb-0">{{ _('pages.dashboard.subtitle') }}</p>
 {% endblock %}
 
 {% block content %}
@@ -11,18 +11,17 @@
         <div class="hero-section py-5">
             <div class="display-4 mb-4">
                 <i class="bi bi-twitter text-primary"></i>
-                <span class="fw-bold">Twitter Analiz</span>
+                <span class="fw-bold">{{ _('nav.brand') }}</span>
             </div>
             <p class="lead text-muted mb-4">
-                Gelişmiş AI teknolojileri ile Twitter verilerinizi analiz edin. 
-                LDA konu modelleme, duygu analizi ve kelime bulutu oluşturma.
+                {{ _('pages.dashboard.description') }}
             </p>
             <div class="d-flex gap-3 justify-content-center">
                 <a href="{{ url_for('main.veri_secimi') }}" class="btn btn-primary btn-lg">
-                    <i class="bi bi-rocket-takeoff"></i> Hemen Başla
+                    <i class="bi bi-rocket-takeoff"></i> {{ _('pages.dashboard.get_started') }}
                 </a>
                 <a href="#features" class="btn btn-outline-secondary btn-lg">
-                    <i class="bi bi-info-circle"></i> Daha Fazla Bilgi
+                    <i class="bi bi-info-circle"></i> {{ _('pages.dashboard.more_info') }}
                 </a>
             </div>
         </div>
@@ -37,15 +36,15 @@
                 <div class="text-primary mb-2">
                     <i class="bi bi-file-earmark-text display-4"></i>
                 </div>
-                <h5 class="card-title">Veri Dosyaları</h5>
+                <h5 class="card-title">{{ _('pages.dashboard.data_files') }}</h5>
                 <h2 class="text-primary mb-0" id="totalFiles">
                     <div class="spinner-border spinner-border-sm" role="status">
-                        <span class="visually-hidden">Yükleniyor...</span>
+                        <span class="visually-hidden">{{ _('common.loading') }}</span>
                     </div>
                 </h2>
-                <small class="text-muted">JSON formatında</small>
+                <small class="text-muted">{{ _('pages.dashboard.json_format') }}</small>
                 <div class="mt-2">
-                    <span class="badge bg-light text-dark" id="filesSize">Hesaplanıyor...</span>
+                    <span class="badge bg-light text-dark" id="filesSize">{{ _('common.calculating') }}</span>
                 </div>
             </div>
         </div>
@@ -56,15 +55,15 @@
                 <div class="text-success mb-2">
                     <i class="bi bi-chat-text display-4"></i>
                 </div>
-                <h5 class="card-title">Toplam Tweet</h5>
+                <h5 class="card-title">{{ _('pages.dashboard.total_tweets') }}</h5>
                 <h2 class="text-success mb-0" id="totalTweets">
                     <div class="spinner-border spinner-border-sm" role="status">
-                        <span class="visually-hidden">Yükleniyor...</span>
+                        <span class="visually-hidden">{{ _('common.loading') }}</span>
                     </div>
                 </h2>
-                <small class="text-muted">Analiz edilebilir</small>
+                <small class="text-muted">{{ _('pages.dashboard.analyzable') }}</small>
                 <div class="mt-2">
-                    <span class="badge bg-light text-dark" id="tweetsToday">Bugün: 0</span>
+                    <span class="badge bg-light text-dark" id="tweetsToday">{{ _('common.today') }}: 0</span>
                 </div>
             </div>
         </div>
@@ -75,15 +74,15 @@
                 <div class="text-warning mb-2">
                     <i class="bi bi-gear display-4"></i>
                 </div>
-                <h5 class="card-title">Aktif Analiz</h5>
+                <h5 class="card-title">{{ _('pages.dashboard.active_analysis') }}</h5>
                 <h2 class="text-warning mb-0" id="activeAnalysis">
                     <div class="spinner-border spinner-border-sm" role="status">
-                        <span class="visually-hidden">Yükleniyor...</span>
+                        <span class="visually-hidden">{{ _('common.loading') }}</span>
                     </div>
                 </h2>
-                <small class="text-muted">İşlem görüyor</small>
+                <small class="text-muted">{{ _('pages.dashboard.processing') }}</small>
                 <div class="mt-2">
-                    <span class="badge bg-light text-dark" id="queuedAnalysis">Sırada: 0</span>
+                    <span class="badge bg-light text-dark" id="queuedAnalysis">{{ _('common.queue') }}: 0</span>
                 </div>
             </div>
         </div>
@@ -94,15 +93,15 @@
                 <div class="text-info mb-2">
                     <i class="bi bi-graph-up display-4"></i>
                 </div>
-                <h5 class="card-title">Tamamlanan</h5>
+                <h5 class="card-title">{{ _('pages.dashboard.completed') }}</h5>
                 <h2 class="text-info mb-0" id="completedAnalysis">
                     <div class="spinner-border spinner-border-sm" role="status">
-                        <span class="visually-hidden">Yükleniyor...</span>
+                        <span class="visually-hidden">{{ _('common.loading') }}</span>
                     </div>
                 </h2>
-                <small class="text-muted">Başarıyla tamamlandı</small>
+                <small class="text-muted">{{ _('pages.dashboard.successfully_completed') }}</small>
                 <div class="mt-2">
-                    <span class="badge bg-light text-dark" id="successRate">Başarı: 100%</span>
+                    <span class="badge bg-light text-dark" id="successRate">{{ _('common.success_rate') }}: 100%</span>
                 </div>
             </div>
         </div>
@@ -116,39 +115,39 @@
             <div class="card-header bg-transparent border-0">
                 <h5 class="mb-0">
                     <i class="bi bi-lightning text-warning"></i>
-                    Hızlı İşlemler
+                    {{ _('pages.dashboard.quick_operations') }}
                 </h5>
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
                     <button class="btn btn-primary" onclick="startQuickAnalysis()">
-                        <i class="bi bi-rocket"></i> Hızlı Analiz (Test Verisi)
+                        <i class="bi bi-rocket"></i> {{ _('pages.dashboard.quick_analysis') }}
                     </button>
                     <button class="btn btn-outline-success" onclick="uploadNewData()">
-                        <i class="bi bi-cloud-upload"></i> Yeni Veri Yükle
+                        <i class="bi bi-cloud-upload"></i> {{ _('pages.dashboard.upload_new_data') }}
                     </button>
                     <button class="btn btn-outline-info" onclick="viewTemplates()">
-                        <i class="bi bi-collection"></i> Analiz Şablonları
+                        <i class="bi bi-collection"></i> {{ _('pages.dashboard.analysis_templates') }}
                     </button>
                     <button class="btn btn-outline-warning" onclick="exportAllResults()">
-                        <i class="bi bi-download"></i> Tüm Sonuçları İndir
+                        <i class="bi bi-download"></i> {{ _('pages.dashboard.download_all_results') }}
                     </button>
                 </div>
                 
                 <hr>
                 
-                <h6>Sistem Durumu</h6>
+                <h6>{{ _('common.system_status') }}</h6>
                 <div class="small">
                     <div class="d-flex justify-content-between mb-1">
-                        <span>Durum:</span>
-                        <span class="fw-bold text-success" id="systemStatus">Çevrimiçi</span>
+                        <span>{{ _('common.status') }}:</span>
+                        <span class="fw-bold text-success" id="systemStatus">{{ _('common.online') }}</span>
                     </div>
                     <div class="d-flex justify-content-between mb-1">
-                        <span>Son Güncelleme:</span>
-                        <span class="fw-bold text-info" id="lastUpdate">Az önce</span>
+                        <span>{{ _('common.last_update') }}:</span>
+                        <span class="fw-bold text-info" id="lastUpdate">{{ _('common.just_now') }}</span>
                     </div>
                     <div class="d-flex justify-content-between">
-                        <span>Versiyon:</span>
+                        <span>{{ _('common.version') }}:</span>
                         <span class="fw-bold text-warning" id="version">v2.1.0</span>
                     </div>
                 </div>
@@ -161,22 +160,22 @@
             <div class="card-header bg-transparent border-0">
                 <h5 class="mb-0">
                     <i class="bi bi-graph-up text-info"></i>
-                    Son Analizler
+                    {{ _('pages.dashboard.recent_analyses') }}
                 </h5>
             </div>
             <div class="card-body">
                 <div id="recentAnalyzesList">
                     <div class="text-center text-muted">
                         <div class="spinner-border spinner-border-sm" role="status">
-                            <span class="visually-hidden">Yükleniyor...</span>
+                            <span class="visually-hidden">{{ _('common.loading') }}</span>
                         </div>
-                        <p class="mt-2 mb-0">Son analizler yükleniyor...</p>
+                        <p class="mt-2 mb-0">{{ _('pages.dashboard.recent_analyses_loading') }}</p>
                     </div>
                 </div>
                 
                 <div class="mt-3 text-center">
                     <a href="/sonuclar" class="btn btn-outline-primary btn-sm">
-                        <i class="bi bi-eye"></i> Tüm Analizleri Görüntüle
+                        <i class="bi bi-eye"></i> {{ _('pages.dashboard.view_all_analyses') }}
                     </a>
                 </div>
             </div>
@@ -187,7 +186,7 @@
 <!-- Features Section -->
 <div id="features" class="row mb-5">
     <div class="col">
-        <h2 class="text-center mb-5">Analiz Özellikleri</h2>
+        <h2 class="text-center mb-5">{{ _('pages.dashboard.analysis_features') }}</h2>
     </div>
 </div>
 

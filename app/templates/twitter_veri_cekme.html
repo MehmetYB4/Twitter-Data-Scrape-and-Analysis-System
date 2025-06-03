@@ -110,7 +110,7 @@
 {% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item active">Twitter Veri Çekme</li>
+<li class="breadcrumb-item active">{{ _('nav.twitter_data_extraction') }}</li>
 {% endblock %}
 
 {% block content %}
@@ -121,40 +121,40 @@
             <div class="card-header bg-twitter text-white">
                 <h5 class="card-title mb-0">
                     <i class="bi bi-twitter twitter-icon"></i>
-                    Twitter Veri Çekme
+                    {{ _('pages.twitter_data_extraction.title') }}
                 </h5>
             </div>
             <div class="card-body">
                 <form id="twitterForm">
                     <div class="mb-4">
                         <label for="username" class="form-label">
-                            <i class="bi bi-person-circle me-2"></i>Twitter Kullanıcı Adı
+                            <i class="bi bi-person-circle me-2"></i>{{ _('pages.twitter_data_extraction.username') }}
                         </label>
                         <div class="input-group">
                             <span class="input-group-text">@</span>
                             <input type="text" class="form-control" id="username" name="username" 
-                                   placeholder="örneğin: varank" required>
+                                   placeholder="{{ _('pages.twitter_data_extraction.username_placeholder') }}" required>
                         </div>
                         <small class="form-text text-muted">
-                            @ işareti olmadan sadece kullanıcı adını girin
+                            {{ _('pages.twitter_data_extraction.username_placeholder') }}
                         </small>
                     </div>
                     
                     <div class="mb-4">
                         <label for="tweet_count" class="form-label">
-                            <i class="bi bi-list-ol me-2"></i>Tweet Sayısı
+                            <i class="bi bi-list-ol me-2"></i>{{ _('pages.twitter_data_extraction.tweet_count') }}
                         </label>
                         <input type="number" class="form-control" id="tweet_count" name="tweet_count" 
                                value="100" min="1" max="5000" required>
                         <small class="form-text text-muted">
-                            1-5000 arasında bir değer girin. Daha fazla tweet daha uzun sürer.
+                            {{ _('pages.twitter_data_extraction.tweet_count_placeholder') }}
                         </small>
                     </div>
                     
                     <div class="d-grid">
                         <button type="submit" class="btn btn-twitter btn-lg" id="startBtn">
                             <i class="bi bi-download me-2"></i>
-                            Veri Çekmeyi Başlat
+                            {{ _('pages.twitter_data_extraction.start_extraction') }}
                         </button>
                     </div>
                 </form>
@@ -165,18 +165,18 @@
                         <div class="col">
                             <button class="btn btn-outline-warning btn-sm w-100" id="resetCookiesBtn">
                                 <i class="bi bi-shield-x me-1"></i>
-                                Oturum Temizle
+                                {{ _('pages.twitter_data_extraction.reset_cookies') }}
                             </button>
                         </div>
                         <div class="col">
                             <button class="btn btn-outline-danger btn-sm w-100" id="cancelBtn" style="display: none;">
                                 <i class="bi bi-stop-circle me-1"></i>
-                                İptal Et
+                                {{ _('pages.twitter_data_extraction.cancel_extraction') }}
                             </button>
                         </div>
                     </div>
                     <small class="form-text text-muted mt-1">
-                        Güvenlik bloğu yaşıyorsanız "Oturum Temizle" butonunu kullanın
+                        Güvenlik bloğu yaşıyorsanız "{{ _('pages.twitter_data_extraction.reset_cookies') }}" butonunu kullanın
                     </small>
                 </div>
                 
@@ -185,12 +185,12 @@
                     <div class="alert alert-info">
                         <div class="d-flex align-items-center">
                             <div class="spinner-border spinner-border-sm me-3" role="status">
-                                <span class="visually-hidden">Yükleniyor...</span>
+                                <span class="visually-hidden">{{ _('common.loading') }}</span>
                             </div>
                             <div>
-                                <strong>İşlem Devam Ediyor</strong>
+                                <strong>{{ _('pages.twitter_data_extraction.extraction_in_progress') }}</strong>
                                 <div class="mt-1">
-                                    <small id="statusMessage">İşlem başlatılıyor...</small>
+                                    <small id="statusMessage">{{ _('common.processing') }}</small>
                                 </div>
                             </div>
                         </div>

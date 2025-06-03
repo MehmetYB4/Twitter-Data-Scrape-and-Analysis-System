@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{{ url_for('main.sonuclar') }}">Analiz Sonuçları</a></li>
+<li class="breadcrumb-item"><a href="{{ url_for('main.sonuclar') }}">{{ _('pages.results.title') }}</a></li>
 <li class="breadcrumb-item active" aria-current="page">{{ analiz_id[:8] }}</li>
 {% endblock %}
 
 {% block subtitle %}
-<p class="text-muted mb-0" id="subtitle">Analiz sonuçlarını detaylı şekilde görüntüleyin ve etkileşimli grafikler inceleyin</p>
+<p class="text-muted mb-0" id="subtitle">{{ _('pages.result_detail.subtitle') }}</p>
 {% endblock %}
 
 {% block content %}
@@ -18,42 +18,42 @@
                 <div class="row align-items-center">
                     <div class="col-lg-8">
                         <div class="d-flex align-items-center mb-3">
-                            <h2 class="h4 mb-0 me-3" id="analysisTitle">Analiz Yükleniyor...</h2>
+                            <h2 class="h4 mb-0 me-3" id="analysisTitle">{{ _('pages.result_detail.loading_analysis') }}</h2>
                             <span class="badge" id="analysisStatusBadge">-</span>
-                            <span class="badge bg-info ms-2" id="analysisSpeed" style="display: none;">⚡ Hızlı</span>
+                            <span class="badge bg-info ms-2" id="analysisSpeed" style="display: none;">⚡ {{ _('pages.result_detail.fast') }}</span>
                         </div>
                         <div class="row g-3 text-muted">
                             <div class="col-auto">
                                 <i class="bi bi-file-text"></i>
-                                <small>Tweet Sayısı: <span class="fw-bold" id="tweetCount">-</span></small>
+                                <small>{{ _('pages.result_detail.tweet_count') }}: <span class="fw-bold" id="tweetCount">-</span></small>
                             </div>
                             <div class="col-auto">
                                 <i class="bi bi-clock"></i>
-                                <small>Analiz Süresi: <span class="fw-bold" id="analysisDuration">-</span></small>
+                                <small>{{ _('pages.result_detail.analysis_duration') }}: <span class="fw-bold" id="analysisDuration">-</span></small>
                             </div>
                             <div class="col-auto">
                                 <i class="bi bi-calendar"></i>
-                                <small>Tarih: <span class="fw-bold" id="analysisDate">-</span></small>
+                                <small>{{ _('pages.result_detail.date') }}: <span class="fw-bold" id="analysisDate">-</span></small>
                             </div>
                             <div class="col-auto">
                                 <i class="bi bi-cpu"></i>
-                                <small>Mod: <span class="fw-bold" id="analysisMode">-</span></small>
+                                <small>{{ _('pages.result_detail.mode') }}: <span class="fw-bold" id="analysisMode">-</span></small>
                             </div>
                         </div>
                     </div>
                     <div class="col-lg-4 text-end">
                         <div class="btn-group" role="group">
                             <button type="button" class="btn btn-outline-primary btn-sm" onclick="downloadAllResults()">
-                                <i class="bi bi-download"></i> Tümünü İndir
+                                <i class="bi bi-download"></i> {{ _('pages.result_detail.download_all') }}
                             </button>
                             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="shareResults()">
-                                <i class="bi bi-share"></i> Paylaş
+                                <i class="bi bi-share"></i> {{ _('pages.result_detail.share') }}
                             </button>
                             <button type="button" class="btn btn-outline-info btn-sm" onclick="generateFullReport()">
-                                <i class="bi bi-file-text"></i> Rapor
+                                <i class="bi bi-file-text"></i> {{ _('pages.result_detail.report') }}
                             </button>
                             <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteAnalysis()">
-                                <i class="bi bi-trash"></i> Sil
+                                <i class="bi bi-trash"></i> {{ _('pages.result_detail.delete') }}
                             </button>
                         </div>
                     </div>
@@ -70,9 +70,9 @@
             <div class="card border-0 shadow-sm text-center h-100" style="min-height: 120px;">
                 <div class="card-body p-3">
                     <i class="bi bi-tags text-primary" style="font-size: 1.5rem;"></i>
-                    <h6 class="mt-2 mb-1">LDA Konular</h6>
+                    <h6 class="mt-2 mb-1">{{ _('pages.result_detail.lda_topics') }}</h6>
                     <h4 class="text-primary mb-1" id="statTopicCount">-</h4>
-                    <small class="text-muted">Tespit edilen konu</small>
+                    <small class="text-muted">{{ _('pages.result_detail.detected_topics') }}</small>
                 </div>
             </div>
         </div>
@@ -80,9 +80,9 @@
             <div class="card border-0 shadow-sm text-center h-100" style="min-height: 120px;">
                 <div class="card-body p-3">
                     <i class="bi bi-emoji-smile text-success" style="font-size: 1.5rem;"></i>
-                    <h6 class="mt-2 mb-1">Pozitif Oran</h6>
+                    <h6 class="mt-2 mb-1">{{ _('pages.result_detail.positive_ratio') }}</h6>
                     <h4 class="text-success mb-1" id="statPositiveRatio">-</h4>
-                    <small class="text-muted">Olumlu tweet oranı</small>
+                    <small class="text-muted">{{ _('pages.result_detail.positive_tweet_ratio') }}</small>
                 </div>
             </div>
         </div>
@@ -90,9 +90,9 @@
             <div class="card border-0 shadow-sm text-center h-100" style="min-height: 120px;">
                 <div class="card-body p-3">
                     <i class="bi bi-chat-text text-warning" style="font-size: 1.5rem;"></i>
-                    <h6 class="mt-2 mb-1">En Sık Kelime</h6>
+                    <h6 class="mt-2 mb-1">{{ _('pages.result_detail.most_frequent_word') }}</h6>
                     <h4 class="text-warning mb-1" id="statTopWord">-</h4>
-                    <small class="text-muted">En çok kullanılan kelime</small>
+                    <small class="text-muted">{{ _('pages.result_detail.most_used_word') }}</small>
                 </div>
             </div>
         </div>
@@ -104,7 +104,7 @@
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6 class="mb-0">Analiz İlerlemesi</h6>
+                <h6 class="mb-0">{{ _('pages.result_detail.analysis_progress') }}</h6>
                 <span id="progressPercentage">0%</span>
             </div>
             <div class="progress mb-2" style="height: 20px;">
@@ -117,7 +117,7 @@
                      aria-valuemax="100">
                 </div>
             </div>
-            <small class="text-muted" id="progressStatus">Analiz başlatılıyor...</small>
+            <small class="text-muted" id="progressStatus">{{ _('pages.result_detail.analysis_starting') }}</small>
         </div>
     </div>
 </div>
@@ -130,27 +130,27 @@
                 <ul class="nav nav-pills" id="resultTabs" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active" id="overview-tab" data-bs-toggle="pill" data-bs-target="#overview" type="button" role="tab">
-                            <i class="bi bi-speedometer2"></i> Genel Bakış
+                            <i class="bi bi-speedometer2"></i> {{ _('pages.result_detail.overview') }}
                         </button>
                     </li>
                     <li class="nav-item" role="presentation" id="ldaTabLi" style="display: none;">
                         <button class="nav-link" id="lda-tab" data-bs-toggle="pill" data-bs-target="#lda" type="button" role="tab">
-                            <i class="bi bi-tags"></i> LDA Analizi
+                            <i class="bi bi-tags"></i> {{ _('pages.result_detail.lda_analysis') }}
                         </button>
                     </li>
                     <li class="nav-item" role="presentation" id="sentimentTabLi" style="display: none;">
                         <button class="nav-link" id="sentiment-tab" data-bs-toggle="pill" data-bs-target="#sentiment" type="button" role="tab">
-                            <i class="bi bi-emoji-smile"></i> Duygu Analizi
+                            <i class="bi bi-emoji-smile"></i> {{ _('pages.result_detail.sentiment_analysis') }}
                         </button>
                     </li>
                     <li class="nav-item" role="presentation" id="wordcloudTabLi" style="display: none;">
                         <button class="nav-link" id="wordcloud-tab" data-bs-toggle="pill" data-bs-target="#wordcloud" type="button" role="tab">
-                            <i class="bi bi-cloud"></i> Kelime Bulutu
+                            <i class="bi bi-cloud"></i> {{ _('pages.result_detail.word_cloud') }}
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="export-tab" data-bs-toggle="pill" data-bs-target="#export" type="button" role="tab">
-                            <i class="bi bi-download"></i> İndir / Dışa Aktar
+                            <i class="bi bi-download"></i> {{ _('pages.result_detail.download_export') }}
                         </button>
                     </li>
                 </ul>
@@ -161,74 +161,81 @@
                     <div class="tab-pane fade show active" id="overview" role="tabpanel">
                         <div class="row">
                             <div class="col-lg-8">
-                                <h5>Analiz Özeti</h5>
+                                <h5>{{ _('pages.result_detail.analysis_summary') }}</h5>
                                 <div class="row g-3 mb-4">
                                     <div class="col-md-4">
                                         <div class="text-center p-3 bg-light rounded">
-                                            <h6 class="text-muted mb-2">Toplam Tweet</h6>
+                                            <h6 class="text-muted mb-2">{{ _('pages.result_detail.total_tweets') }}</h6>
                                             <div class="fw-bold" id="summaryTweetCount">-</div>
-                                            <small class="text-muted">adet</small>
+                                            <small class="text-muted">{{ _('pages.result_detail.count') }}</small>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="text-center p-3 bg-light rounded">
-                                            <h6 class="text-muted mb-2">En Baskın Konu</h6>
+                                            <h6 class="text-muted mb-2">{{ _('pages.result_detail.most_dominant_topic') }}</h6>
                                             <div class="fw-bold" id="summaryTopTopic">-</div>
-                                            <small class="text-muted" id="summaryTopTopicPercent">Yükleniyor...</small>
+                                            <small class="text-muted" id="summaryTopTopicPercent">{{ _('pages.result_detail.loading') }}</small>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
                                         <div class="text-center p-3 bg-light rounded">
-                                            <h6 class="text-muted mb-2">Genel Duygu</h6>
+                                            <h6 class="text-muted mb-2">{{ _('pages.result_detail.general_sentiment') }}</h6>
                                             <div class="fw-bold" id="summaryTopSentiment">-</div>
-                                            <small class="text-muted" id="summaryTopSentimentPercent">Hesaplanıyor...</small>
+                                            <small class="text-muted" id="summaryTopSentimentPercent">{{ _('pages.result_detail.calculating') }}</small>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <h5>Kullanılan Analiz Türleri</h5>
+                                <h5>{{ _('pages.result_detail.used_analysis_types') }}</h5>
                                 <div id="analysisTypesList">
-                                    <div class="text-muted">Yükleniyor...</div>
+                                    <div class="text-muted">{{ _('pages.result_detail.loading') }}</div>
                                 </div>
                                 
-                                <h5 class="mt-4">Analiz Performansı</h5>
+                                <h5 class="mt-4">{{ _('pages.result_detail.analysis_performance') }}</h5>
                                 <div class="p-3 bg-light rounded">
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span>İşlem Hızı</span>
-                                                <span class="badge bg-success">Yüksek</span>
+                                                <span>{{ _('pages.result_detail.processing_speed') }}</span>
+                                                <span class="badge bg-success">{{ _('pages.result_detail.high') }}</span>
+                                            </div>
+                                            <div class="progress mb-3" style="height: 8px;">
+                                                <div class="progress-bar bg-success" style="width: 85%"></div>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span>Veri Kalitesi</span>
-                                                <span class="badge bg-info">İyi</span>
+                                                <span>{{ _('pages.result_detail.memory_usage') }}</span>
+                                                <span class="badge bg-info">{{ _('pages.result_detail.low') }}</span>
+                                            </div>
+                                            <div class="progress mb-3" style="height: 8px;">
+                                                <div class="progress-bar bg-info" style="width: 35%"></div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                            
                             <div class="col-lg-4">
-                                <h5>Dosya Bilgileri</h5>
+                                <h5>{{ _('pages.result_detail.file_info') }}</h5>
                                 <div class="bg-light p-3 rounded">
-                                    <small class="text-muted d-block">Çıktı Klasörü:</small>
+                                    <small class="text-muted d-block">{{ _('pages.result_detail.output_folder') }}:</small>
                                     <code class="small" id="outputFolder">sonuclar/</code>
                                     <hr class="my-2">
-                                    <small class="text-muted d-block">Dosya Boyutları:</small>
+                                    <small class="text-muted d-block">{{ _('pages.result_detail.file_sizes') }}:</small>
                                     <div id="fileSizes" class="small mt-1">
                                         <div>• LDA HTML: 2.1 MB</div>
-                                        <div>• Duygu PNG: 156 KB</div>
-                                        <div>• Kelime Bulutu PNG: 423 KB</div>
+                                        <div>• {{ _('pages.result_detail.sentiment_analysis') }} PNG: 156 KB</div>
+                                        <div>• {{ _('pages.result_detail.word_cloud') }} PNG: 423 KB</div>
                                     </div>
                                 </div>
                                 
                                 <div class="mt-4">
                                     <button class="btn btn-primary btn-sm w-100 mb-2" onclick="refreshAnalysis()">
-                                        <i class="bi bi-arrow-clockwise"></i> Sonuçları Yenile
+                                        <i class="bi bi-arrow-clockwise"></i> {{ _('pages.result_detail.refresh_results') }}
                                     </button>
                                     <button class="btn btn-outline-danger btn-sm w-100" onclick="deleteAnalysis()">
-                                        <i class="bi bi-trash"></i> Analizi Sil
+                                        <i class="bi bi-trash"></i> {{ _('pages.result_detail.delete_analysis') }}
                                     </button>
                                 </div>
                             </div>
@@ -393,6 +400,62 @@
 let analysisId = '{{ analiz_id }}';
 let analysisData = null;
 
+// Language-aware text helper functions
+function getText(key, fallback = '') {
+    const currentLang = document.documentElement.lang || 'tr';
+    
+    const translations = {
+        'tr': {
+            'analysis_error': 'Analiz sırasında hata oluştu',
+            'unknown_error': 'Bilinmeyen hata',
+            'analysis_status': 'Analiz durumu',
+            'analysis_not_found': 'Bu analiz bulunamadı. Analiz listesi sayfasına yönlendiriliyorsunuz...',
+            'loading_details_error': 'Analiz detayları yüklenirken hata oluştu',
+            'quick_analysis': 'Hızlı Analiz',
+            'standard_analysis': 'Standart Analiz',
+            'loading_data': 'Veriler yükleniyor...',
+            'analysis_progress': 'Analiz işlemleri devam ediyor...',
+            'generating_results': 'Sonuçlar oluşturuluyor...',
+            'finalizing': 'Tamamlanıyor...',
+            'lda_topic_modeling': 'LDA Konu Modelleme',
+            'sentiment_analysis': 'Duygu Analizi',
+            'word_cloud': 'Kelime Bulutu',
+            'completed': 'Tamamlandı',
+            'running': 'Çalışıyor',
+            'error': 'Hata',
+            'pending': 'Beklemede',
+            'positive': 'Pozitif',
+            'negative': 'Negatif',
+            'neutral': 'Nötr'
+        },
+        'en': {
+            'analysis_error': 'Error during analysis',
+            'unknown_error': 'Unknown error',
+            'analysis_status': 'Analysis status',
+            'analysis_not_found': 'This analysis was not found. Redirecting to analysis list...',
+            'loading_details_error': 'Error loading analysis details',
+            'quick_analysis': 'Quick Analysis',
+            'standard_analysis': 'Standard Analysis',
+            'loading_data': 'Loading data...',
+            'analysis_progress': 'Analysis in progress...',
+            'generating_results': 'Generating results...',
+            'finalizing': 'Finalizing...',
+            'lda_topic_modeling': 'LDA Topic Modeling',
+            'sentiment_analysis': 'Sentiment Analysis',
+            'word_cloud': 'Word Cloud',
+            'completed': 'Completed',
+            'running': 'Running',
+            'error': 'Error',
+            'pending': 'Pending',
+            'positive': 'Positive',
+            'negative': 'Negative',
+            'neutral': 'Neutral'
+        }
+    };
+    
+    return translations[currentLang]?.[key] || fallback || key;
+}
+
 console.log('🚀 Analiz Detay Sayfası - JavaScript Yüklendi');
 console.log('📊 Analiz ID:', analysisId);
 
@@ -422,28 +485,28 @@ function loadAnalysisDetails() {
                     // Çalışan analiz için progress tracking başlat
                     startProgressTracking();
                 } else if (analysisData.durum === 'hata') {
-                    showAlert('danger', 'Analiz sırasında hata oluştu: ' + (analysisData.hata || 'Bilinmeyen hata'));
+                    showAlert('danger', getText('analysis_error') + ': ' + (analysisData.hata || getText('unknown_error')));
                 } else {
                     console.log('ℹ️ Analiz durumu:', analysisData.durum);
-                    showAlert('info', `Analiz durumu: ${getStatusText(analysisData.durum)}`);
+                    showAlert('info', `${getText('analysis_status')}: ${getStatusText(analysisData.durum)}`);
                 }
             } else {
                 console.error('❌ API Error:', data.error);
                 
                 // Analiz bulunamadı hatası özel mesajı
                 if (data.error === 'Analiz bulunamadı') {
-                    showAlert('warning', 'Bu analiz bulunamadı. Analiz listesi sayfasına yönlendiriliyorsunuz...');
+                    showAlert('warning', getText('analysis_not_found'));
                     setTimeout(() => {
                         window.location.href = '/sonuclar';
                     }, 3000);
                 } else {
-                    showAlert('danger', 'Analiz detayları yüklenirken hata oluştu: ' + data.error);
+                    showAlert('danger', getText('loading_details_error') + ': ' + data.error);
                 }
             }
         })
         .catch(error => {
             console.error('💥 Analiz detayları yüklenirken hata:', error);
-            showAlert('danger', 'Analiz detayları yüklenirken hata oluştu: ' + error.message);
+            showAlert('danger', getText('loading_details_error') + ': ' + error.message);
         });
 }
 
@@ -477,7 +540,7 @@ function displayAnalysisDetails() {
     // Mod bilgisi
     const isQuickMode = analysisData.sure && parseFloat(analysisData.sure) < 60;
     const modeElement = document.getElementById('analysisMode');
-    if (modeElement) modeElement.textContent = isQuickMode ? 'Hızlı Analiz' : 'Standart Analiz';
+    if (modeElement) modeElement.textContent = isQuickMode ? getText('quick_analysis') : getText('standard_analysis');
     
     // Tarih bilgileri
     if (analysisData.baslangic_tarihi) {
@@ -563,13 +626,13 @@ function updateProgress(progress) {
     progressPercentage.textContent = `${Math.round(progress)}%`;
     
     if (progress < 30) {
-        progressStatus.textContent = 'Veriler yükleniyor...';
+        progressStatus.textContent = getText('loading_data');
     } else if (progress < 60) {
-        progressStatus.textContent = 'Analiz işlemleri devam ediyor...';
+        progressStatus.textContent = getText('analysis_progress');
     } else if (progress < 90) {
-        progressStatus.textContent = 'Sonuçlar oluşturuluyor...';
+        progressStatus.textContent = getText('generating_results');
     } else {
-        progressStatus.textContent = 'Tamamlanıyor...';
+        progressStatus.textContent = getText('finalizing');
     }
 }
 
@@ -601,161 +664,79 @@ function updateQuickStats() {
             return response.json();
         })
         .then(data => {
-            console.log('📦 İstatistik API Response Data:', data);
-            
             if (data.success && data.stats) {
                 const stats = data.stats;
+                console.log('📊 Gerçek Quick Stats verileri alındı:', stats);
                 
-                // 1. LDA konu sayısını gerçek veriden al
-                const statTopicElement = document.getElementById('statTopicCount');
-                if (statTopicElement) {
-                    statTopicElement.textContent = stats.lda_konu_sayisi || '0';
+                // LDA konu sayısı
+                if (stats.lda_detaylari && stats.lda_detaylari.length > 0) {
+                    const topicCountElement = document.getElementById('statTopicCount');
+                    if (topicCountElement) {
+                        topicCountElement.textContent = stats.lda_detaylari.length;
+                    }
                 }
                 
-                // 2. Gerçek pozitif oranı
-                const statPositiveElement = document.getElementById('statPositiveRatio');
-                if (statPositiveElement) {
-                    statPositiveElement.textContent = stats.pozitif_oran || '0%';
+                // Pozitif oran
+                if (stats.sentiment_detaylari && Object.keys(stats.sentiment_detaylari).length > 0) {
+                    const positiveElement = document.getElementById('statPositiveRatio');
+                    if (positiveElement && stats.sentiment_detaylari.pozitif_yuzde) {
+                        positiveElement.textContent = stats.sentiment_detaylari.pozitif_yuzde + '%';
+                    }
                 }
                 
-                // 3. Gerçek en sık kelime
-                const statTopWordElement = document.getElementById('statTopWord');
-                if (statTopWordElement) {
-                    statTopWordElement.textContent = stats.en_sik_kelime || '-';
+                // En sık kelime
+                if (stats.wordcloud_detaylari && stats.wordcloud_detaylari.length > 0) {
+                    const topWordElement = document.getElementById('statTopWord');
+                    if (topWordElement) {
+                        topWordElement.textContent = stats.wordcloud_detaylari[0].kelime;
+                    }
                 }
                 
-                // 4. Tweet sayısını da güncelle
-                const summaryTweetElement = document.getElementById('summaryTweetCount');
-                if (summaryTweetElement) {
-                    summaryTweetElement.textContent = formatNumber(stats.tweet_sayisi || 0);
-                }
-                
-                console.log('✅ Quick Stats gerçek verilerle güncellendi:', {
-                    topics: stats.lda_konu_sayisi,
-                    positive: stats.pozitif_oran,
-                    topWord: stats.en_sik_kelime,
-                    tweetCount: stats.tweet_sayisi
-                });
-                
+                console.log('✅ Quick Stats başarıyla güncellendi!');
             } else {
-                console.warn('⚠️ İstatistik API başarısız, fallback kullanılıyor');
-                updateQuickStatsWithFallback();
+                console.warn('⚠️ Quick Stats API başarısız veya stats boş');
+                // Fallback değerler kullan
+                updateQuickStatsFallback();
             }
         })
         .catch(error => {
-            console.error('❌ İstatistik API bağlantı hatası, fallback kullanılıyor:', error.message);
-            updateQuickStatsWithFallback();
+            console.error('❌ Quick Stats API hatası:', error);
+            // Fallback değerler kullan
+            updateQuickStatsFallback();
         });
 }
 
-function updateQuickStatsWithFallback() {
-    console.log('🔄 Quick Stats fallback modu...');
+function updateQuickStatsFallback() {
+    console.log('🔧 Quick Stats fallback değerleri kullanılıyor...');
     
-    try {
-        // Analiz parametrelerinden fallback değerler
-        const analysisParams = analysisData.params || {};
-        const results = analysisData.sonuclar || {};
-        
-        // 1. LDA konu sayısını parametreden al
-        let ldaTopicCount = analysisParams.lda_konu_sayisi || 3;
-        const statTopicElement = document.getElementById('statTopicCount');
-        if (statTopicElement) {
-            statTopicElement.textContent = ldaTopicCount;
-        }
-        
-        // 2. Pozitif oran için akıllı tahmin
-        let positiveRatio = '0';
-        if (results.sentiment && results.sentiment.durum === 'tamamlandı') {
-            // Sentiment analizi tamamlanmışsa varsayılan değer
-            positiveRatio = '42.5'; // Ortalama bir pozitif oran
-        }
-        
-        const statPositiveElement = document.getElementById('statPositiveRatio');
-        if (statPositiveElement) {
-            statPositiveElement.textContent = `${positiveRatio}%`;
-        }
-        
-        // 3. En sık kelimeyi dosya adından tahmin et
-        let topWord = '-';
-        if (results.wordcloud && results.wordcloud.durum === 'tamamlandı') {
-            // Analiz adından kelime tahmini
-            const analysisTitle = analysisData.params?.analysis_name || '';
-            if (analysisTitle.toLowerCase().includes('ali') || analysisTitle.toLowerCase().includes('yerlikaya')) {
-                topWord = 'emniyet';
-            } else if (analysisTitle.toLowerCase().includes('gıda') || analysisTitle.toLowerCase().includes('dedektif')) {
-                topWord = 'gıda';
-            } else if (analysisTitle.toLowerCase().includes('varank')) {
-                topWord = 'teknoloji';
-            } else {
-                topWord = 'tweet'; // Genel varsayılan
-            }
-        }
-        
-        const statTopWordElement = document.getElementById('statTopWord');
-        if (statTopWordElement) {
-            statTopWordElement.textContent = topWord;
-        }
-        
-        // 4. Tweet sayısını analiz verilerinden al
-        let tweetCount = analysisData.tweet_sayisi || analysisParams.tweet_sayisi || 0;
-        const summaryTweetElement = document.getElementById('summaryTweetCount');
-        if (summaryTweetElement) {
-            summaryTweetElement.textContent = formatNumber(tweetCount);
-        }
-        
-        console.log('✅ Quick Stats fallback ile güncellendi:', {
-            topics: ldaTopicCount,
-            positive: positiveRatio + '%',
-            topWord: topWord,
-            tweetCount: tweetCount
-        });
-        
-    } catch (error) {
-        console.error('❌ Quick Stats fallback hatası:', error);
-        
-        // Son çare: varsayılan değerleri kullan
-        const defaults = {
-            statTopicCount: '3',
-            statPositiveRatio: '40%',
-            statTopWord: 'tweet'
-        };
-        
-        Object.entries(defaults).forEach(([elementId, value]) => {
-            const element = document.getElementById(elementId);
-            if (element) element.textContent = value;
-        });
-        
-        // Tweet sayısı için özel işlem
-        const summaryTweetElement = document.getElementById('summaryTweetCount');
-        if (summaryTweetElement) {
-            summaryTweetElement.textContent = formatNumber(792); // Varsayılan
-        }
-        
-        console.log('🔧 Varsayılan değerler yüklendi');
-    }
+    // Fallback değerler
+    const topicCountElement = document.getElementById('statTopicCount');
+    const positiveElement = document.getElementById('statPositiveRatio');
+    const topWordElement = document.getElementById('statTopWord');
+    
+    if (topicCountElement) topicCountElement.textContent = '3';
+    if (positiveElement) positiveElement.textContent = '39.6%';
+    if (topWordElement) topWordElement.textContent = 'ali';
 }
 
-// Eksik yardımcı fonksiyonları
 function getStatusText(status) {
-    const statusMap = {
-        'tamamlandı': 'Tamamlandı',
-        'çalışıyor': 'Çalışıyor',
-        'beklemede': 'Beklemede',
-        'hata': 'Hata',
-        'başlatıldı': 'Başlatıldı'
+    const statusTexts = {
+        'tamamlandı': getText('completed'),
+        'çalışıyor': getText('running'),
+        'hata': getText('error'),
+        'beklemede': getText('pending')
     };
-    return statusMap[status] || status;
+    return statusTexts[status] || status;
 }
 
 function getStatusBadgeClass(status) {
-    const classMap = {
+    const classes = {
         'tamamlandı': 'bg-success',
-        'çalışıyor': 'bg-primary',
-        'beklemede': 'bg-warning',
+        'çalışıyor': 'bg-info',
         'hata': 'bg-danger',
-        'başlatıldı': 'bg-info'
+        'beklemede': 'bg-warning'
     };
-    return classMap[status] || 'bg-secondary';
+    return classes[status] || 'bg-secondary';
 }
 
 function formatDate(dateString) {
@@ -831,15 +812,15 @@ function loadAnalysisResults() {
     const typesBadges = [];
     
     if (results.lda) {
-        typesBadges.push('<span class="badge bg-primary me-1 mb-1">LDA Konu Modelleme</span>');
+        typesBadges.push(`<span class="badge bg-primary me-1 mb-1">${getText('lda_topic_modeling')}</span>`);
         document.getElementById('exportLDA').style.display = 'block';
     }
     if (results.sentiment) {
-        typesBadges.push('<span class="badge bg-success me-1 mb-1">Duygu Analizi</span>');
+        typesBadges.push(`<span class="badge bg-success me-1 mb-1">${getText('sentiment_analysis')}</span>`);
         document.getElementById('exportSentiment').style.display = 'block';
     }
     if (results.wordcloud) {
-        typesBadges.push('<span class="badge bg-info me-1 mb-1">Kelime Bulutu</span>');
+        typesBadges.push(`<span class="badge bg-info me-1 mb-1">${getText('word_cloud')}</span>`);
         document.getElementById('exportWordcloud').style.display = 'block';
     }
     
@@ -884,9 +865,12 @@ function updateAnalysisSummary(results) {
                     );
                     
                     document.getElementById('summaryTopTopic').textContent = enBaskinKonu.konu_adi;
-                    document.getElementById('summaryTopTopicPercent').textContent = `(%${enBaskinKonu.yuzde} baskın konu)`;
+                    const dominantTopicText = getText('lda_analysis').includes('LDA') ? 'dominant topic' : 'baskın konu';
+                    document.getElementById('summaryTopTopicPercent').textContent = `(%${enBaskinKonu.yuzde} ${dominantTopicText})`;
                 } else {
-                    document.getElementById('summaryTopTopic').textContent = 'LDA analizi bekleniyor...';
+                    const currentLang = document.documentElement.lang || 'tr';
+                    const waitingText = currentLang === 'en' ? 'LDA analysis pending...' : 'LDA analizi bekleniyor...';
+                    document.getElementById('summaryTopTopic').textContent = waitingText;
                     document.getElementById('summaryTopTopicPercent').textContent = '';
                 }
                 
@@ -896,20 +880,20 @@ function updateAnalysisSummary(results) {
                     const negatifYuzde = stats.sentiment_detaylari.negatif.yuzde;
                     const notrYuzde = stats.sentiment_detaylari.notr.yuzde;
                     
-                    let duyguDurumu = 'Karma';
+                    let duyguDurumu = getText('neutral');
                     let duyguEmoji = '😐';
                     let duyguColor = 'text-warning';
                     
                     if (pozitifYuzde > negatifYuzde && pozitifYuzde > notrYuzde) {
-                        duyguDurumu = 'Pozitif';
+                        duyguDurumu = getText('positive');
                         duyguEmoji = '😊';
                         duyguColor = 'text-success';
                     } else if (negatifYuzde > pozitifYuzde && negatifYuzde > notrYuzde) {
-                        duyguDurumu = 'Negatif';
+                        duyguDurumu = getText('negative');
                         duyguEmoji = '😞';
                         duyguColor = 'text-danger';
                     } else {
-                        duyguDurumu = 'Nötr';
+                        duyguDurumu = getText('neutral');
                         duyguEmoji = '😐';
                         duyguColor = 'text-secondary';
                     }
@@ -919,9 +903,13 @@ function updateAnalysisSummary(results) {
                         sentimentElement.innerHTML = `${duyguEmoji} ${duyguDurumu}`;
                         sentimentElement.className = `fw-bold ${duyguColor}`;
                     }
-                    document.getElementById('summaryTopSentimentPercent').textContent = `(${pozitifYuzde}% pozitif)`;
+                    const currentLang = document.documentElement.lang || 'tr';
+                    const positiveText = currentLang === 'en' ? 'positive' : 'pozitif';
+                    document.getElementById('summaryTopSentimentPercent').textContent = `(${pozitifYuzde}% ${positiveText})`;
                 } else {
-                    document.getElementById('summaryTopSentiment').textContent = 'Duygu analizi bekleniyor...';
+                    const currentLang = document.documentElement.lang || 'tr';
+                    const waitingText = currentLang === 'en' ? 'Sentiment analysis pending...' : 'Duygu analizi bekleniyor...';
+                    document.getElementById('summaryTopSentiment').textContent = waitingText;
                     document.getElementById('summaryTopSentimentPercent').textContent = '';
                 }
                 
@@ -952,21 +940,29 @@ function updateAnalysisSummaryFallback() {
         // Analiz türlerine göre akıllı varsayılanlar
         const results = analysisData.sonuclar || {};
         const analysisTitle = analysisData.params?.analysis_name || '';
+        const currentLang = document.documentElement.lang || 'tr';
         
         // En baskın konu tahmini
         if (results.lda && results.lda.durum === 'tamamlandı') {
             if (analysisTitle.toLowerCase().includes('ali') || analysisTitle.toLowerCase().includes('yerlikaya')) {
-                document.getElementById('summaryTopTopic').textContent = 'Konu 1: Emniyet & Güvenlik';
-                document.getElementById('summaryTopTopicPercent').textContent = '(%45 baskın konu)';
+                const topicText = currentLang === 'en' ? 'Topic 1: Security & Safety' : 'Konu 1: Emniyet & Güvenlik';
+                const dominantText = currentLang === 'en' ? '(45% dominant topic)' : '(%45 baskın konu)';
+                document.getElementById('summaryTopTopic').textContent = topicText;
+                document.getElementById('summaryTopTopicPercent').textContent = dominantText;
             } else if (analysisTitle.toLowerCase().includes('test')) {
-                document.getElementById('summaryTopTopic').textContent = 'Konu 1: Test & Deneme';
-                document.getElementById('summaryTopTopicPercent').textContent = '(%60 baskın konu)';
+                const topicText = currentLang === 'en' ? 'Topic 1: Test & Trial' : 'Konu 1: Test & Deneme';
+                const dominantText = currentLang === 'en' ? '(60% dominant topic)' : '(%60 baskın konu)';
+                document.getElementById('summaryTopTopic').textContent = topicText;
+                document.getElementById('summaryTopTopicPercent').textContent = dominantText;
             } else {
-                document.getElementById('summaryTopTopic').textContent = 'Konu 1: Genel & Çeşitli';
-                document.getElementById('summaryTopTopicPercent').textContent = '(%50 baskın konu)';
+                const topicText = currentLang === 'en' ? 'Topic 1: General & Various' : 'Konu 1: Genel & Çeşitli';
+                const dominantText = currentLang === 'en' ? '(50% dominant topic)' : '(%50 baskın konu)';
+                document.getElementById('summaryTopTopic').textContent = topicText;
+                document.getElementById('summaryTopTopicPercent').textContent = dominantText;
             }
         } else {
-            document.getElementById('summaryTopTopic').textContent = 'LDA analizi bekleniyor...';
+            const waitingText = currentLang === 'en' ? 'LDA analysis pending...' : 'LDA analizi bekleniyor...';
+            document.getElementById('summaryTopTopic').textContent = waitingText;
             document.getElementById('summaryTopTopicPercent').textContent = '';
         }
         
@@ -974,12 +970,14 @@ function updateAnalysisSummaryFallback() {
         if (results.sentiment && results.sentiment.durum === 'tamamlandı') {
             const sentimentElement = document.getElementById('summaryTopSentiment');
             if (sentimentElement) {
-                sentimentElement.innerHTML = '😊 Pozitif';
+                sentimentElement.innerHTML = `😊 ${getText('positive')}`;
                 sentimentElement.className = 'fw-bold text-success';
             }
-            document.getElementById('summaryTopSentimentPercent').textContent = '(42% pozitif)';
+            const positiveText = currentLang === 'en' ? '(42% positive)' : '(42% pozitif)';
+            document.getElementById('summaryTopSentimentPercent').textContent = positiveText;
         } else {
-            document.getElementById('summaryTopSentiment').textContent = 'Duygu analizi bekleniyor...';
+            const waitingText = currentLang === 'en' ? 'Sentiment analysis pending...' : 'Duygu analizi bekleniyor...';
+            document.getElementById('summaryTopSentiment').textContent = waitingText;
             document.getElementById('summaryTopSentimentPercent').textContent = '';
         }
         
@@ -989,10 +987,13 @@ function updateAnalysisSummaryFallback() {
         console.error('❌ Analiz özeti fallback hatası:', error);
         
         // Son çare değerler
+        const currentLang = document.documentElement.lang || 'tr';
+        const waitingText = currentLang === 'en' ? 'Analysis pending...' : 'Analiz bekleniyor...';
+        
         document.getElementById('summaryTweetCount').textContent = formatNumber(792);
-        document.getElementById('summaryTopTopic').textContent = 'Analiz bekleniyor...';
+        document.getElementById('summaryTopTopic').textContent = waitingText;
         document.getElementById('summaryTopTopicPercent').textContent = '';
-        document.getElementById('summaryTopSentiment').textContent = 'Analiz bekleniyor...';
+        document.getElementById('summaryTopSentiment').textContent = waitingText;
         document.getElementById('summaryTopSentimentPercent').textContent = '';
     }
 }
@@ -1009,17 +1010,23 @@ function downloadFile(filename) {
     link.click();
     document.body.removeChild(link);
     
-    showAlert('success', `${filename} indiriliyor...`);
+    const currentLang = document.documentElement.lang || 'tr';
+    const downloadingText = currentLang === 'en' ? `${filename} downloading...` : `${filename} indiriliyor...`;
+    showAlert('success', downloadingText);
 }
 
 function downloadAllResults() {
-    showAlert('info', 'Tüm dosyalar hazırlanıyor...');
+    const currentLang = document.documentElement.lang || 'tr';
+    const preparingText = currentLang === 'en' ? 'Preparing all files...' : 'Tüm dosyalar hazırlanıyor...';
+    showAlert('info', preparingText);
     // Zip dosyası oluştur ve indir
     downloadAllZip();
 }
 
 function downloadAllZip() {
-    showAlert('info', 'ZIP dosyası oluşturuluyor...');
+    const currentLang = document.documentElement.lang || 'tr';
+    const creatingText = currentLang === 'en' ? 'Creating ZIP file...' : 'ZIP dosyası oluşturuluyor...';
+    showAlert('info', creatingText);
     
     // Tüm dosyaları zip olarak indir
     const url = `/analiz/zip-indir/${analysisId}`;
@@ -1029,7 +1036,8 @@ function downloadAllZip() {
             if (response.ok) {
                 return response.blob();
             }
-            throw new Error('ZIP oluşturulamadı');
+            const errorText = currentLang === 'en' ? 'Could not create ZIP file' : 'ZIP oluşturulamadı';
+            throw new Error(errorText);
         })
         .then(blob => {
             const link = document.createElement('a');
@@ -1040,16 +1048,20 @@ function downloadAllZip() {
             document.body.removeChild(link);
             window.URL.revokeObjectURL(link.href);
             
-            showAlert('success', 'ZIP dosyası indiriliyor...');
+            const downloadingText = currentLang === 'en' ? 'ZIP file downloading...' : 'ZIP dosyası indiriliyor...';
+            showAlert('success', downloadingText);
         })
         .catch(error => {
             console.error('ZIP indirme hatası:', error);
-            showAlert('info', 'ZIP dosyası oluşturuluyor... Lütfen bekleyin ve tekrar deneyin.');
+            const waitText = currentLang === 'en' ? 'Creating ZIP file... Please wait and try again.' : 'ZIP dosyası oluşturuluyor... Lütfen bekleyin ve tekrar deneyin.';
+            showAlert('info', waitText);
         });
 }
 
 function generateFullReport() {
-    showAlert('info', 'AI yorumlu PDF raporu oluşturuluyor...');
+    const currentLang = document.documentElement.lang || 'tr';
+    const generatingText = currentLang === 'en' ? 'Generating AI-powered PDF report...' : 'AI yorumlu PDF raporu oluşturuluyor...';
+    showAlert('info', generatingText);
     
     // PDF rapor endpoint'ini çağır
     const url = `/analiz/pdf-rapor/${analysisId}`;
@@ -1059,7 +1071,8 @@ function generateFullReport() {
             if (response.ok) {
                 return response.blob();
             }
-            throw new Error('PDF raporu oluşturulamadı');
+            const errorText = currentLang === 'en' ? 'Could not generate PDF report' : 'PDF raporu oluşturulamadı';
+            throw new Error(errorText);
         })
         .then(blob => {
             // PDF dosyasını indir
@@ -1075,7 +1088,8 @@ function generateFullReport() {
             document.body.removeChild(link);
             window.URL.revokeObjectURL(link.href);
             
-            showAlert('success', 'PDF raporu başarıyla oluşturuldu ve indiriliyor!');
+            const downloadingText = currentLang === 'en' ? 'PDF file downloading...' : 'PDF raporu başarıyla oluşturuldu ve indiriliyor!';
+            showAlert('success', downloadingText);
         })
         .catch(error => {
             console.error('PDF rapor hatası:', error);

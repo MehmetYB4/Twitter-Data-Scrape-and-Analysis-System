@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item active" aria-current="page">Veri Seçimi</li>
+<li class="breadcrumb-item active" aria-current="page">{{ _('nav.data_selection') }}</li>
 {% endblock %}
 
 {% block subtitle %}
-<p class="text-muted mb-0">Analiz edilecek tweet arşiv dosyalarınızı seçin</p>
+<p class="text-muted mb-0">{{ _('pages.data_selection.select_data') }}</p>
 {% endblock %}
 
 {% block content %}
@@ -16,12 +16,12 @@
             <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
                     <i class="bi bi-file-earmark-text text-primary"></i>
-                    Mevcut Dosyalar
+                    {{ _('pages.data_selection.file_info') }}
                     <span class="badge bg-primary ms-2" id="fileCount">0</span>
                 </h5>
                 <div class="btn-group" role="group">
                     <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshFileList()">
-                        <i class="bi bi-arrow-clockwise"></i> Yenile
+                        <i class="bi bi-arrow-clockwise"></i> {{ _('buttons.refresh') }}
                     </button>
                 </div>
             </div>
@@ -29,8 +29,8 @@
                 <div id="filesContainer">
                     <div class="text-center py-5" id="noFilesMessage">
                         <i class="bi bi-folder2-open display-4 text-muted"></i>
-                        <h5 class="mt-3 text-muted">Tweet arşiv dosyaları aranıyor...</h5>
-                        <p class="text-muted">Lütfen bekleyin</p>
+                        <h5 class="mt-3 text-muted">{{ _('common.loading') }}</h5>
+                        <p class="text-muted">{{ _('common.loading') }}</p>
                     </div>
                     
                     <div class="table-responsive" id="filesTable" style="display: none;">
@@ -40,11 +40,11 @@
                                     <th style="width: 40px;">
                                         <input type="checkbox" class="form-check-input" id="selectAll">
                                     </th>
-                                    <th>Dosya Adı</th>
-                                    <th>Tweet Sayısı</th>
-                                    <th>Boyut</th>
-                                    <th>Tarih</th>
-                                    <th>İşlemler</th>
+                                    <th>{{ _('pages.data_selection.file_info') }}</th>
+                                    <th>{{ _('pages.data_selection.tweet_count') }}</th>
+                                    <th>{{ _('pages.data_selection.file_size') }}</th>
+                                    <th>{{ _('pages.data_selection.creation_date') }}</th>
+                                    <th>{{ _('buttons.view') }}</th>
                                 </tr>
                             </thead>
                             <tbody id="filesTableBody">
@@ -61,7 +61,7 @@
                     <span id="selectionInfo" class="text-muted"></span>
                     <div class="btn-group">
                         <button class="btn btn-success" onclick="startAnalysisWithSelected()">
-                            <i class="bi bi-play-fill"></i> Seçili Dosyaları Analiz Et
+                            <i class="bi bi-play-fill"></i> {{ _('buttons.analyze') }}
                         </button>
                     </div>
                 </div>
@@ -76,7 +76,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="bi bi-eye"></i> Dosya Önizleme
+                    <i class="bi bi-eye"></i> {{ _('pages.data_selection.file_details') }}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -84,16 +84,16 @@
                 <div id="previewContent">
                     <div class="text-center py-4">
                         <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Yükleniyor...</span>
+                            <span class="visually-hidden">{{ _('common.loading') }}</span>
                         </div>
-                        <p class="mt-2">Dosya yükleniyor...</p>
+                        <p class="mt-2">{{ _('common.loading') }}</p>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('buttons.close') }}</button>
                 <button type="button" class="btn btn-primary" onclick="selectFileForAnalysis()">
-                    Bu Dosyayı Analiz Et
+                    {{ _('buttons.analyze') }}
                 </button>
             </div>
         </div>
@@ -103,7 +103,7 @@
 
 {% block scripts %}
 <script>
-console.log('🚀 Veri Seçimi Sayfası - JavaScript Yüklendi');
+console.log('🚀 {{ _("nav.data_selection") }} - JavaScript Loaded');
 
 // Global değişkenler
 let selectedFiles = new Set();
@@ -114,7 +114,7 @@ let currentPreviewFile = null;
 
 // Dosya listesi yükleme
 function loadFileList() {
-    console.log('📁 Dosya listesi yükleniyor...');
+    console.log('📁 Loading file list...');
     
     fetch('/api/files')
         .then(function(response) {
@@ -125,23 +125,23 @@ function loadFileList() {
             console.log('📦 API Response Data:', data);
             if (data.success) {
                 allFiles = data.data;
-                console.log('✅ Yüklenen dosya sayısı:', allFiles.length);
+                console.log('✅ Files loaded:', allFiles.length);
                 displayFiles(allFiles);
                 updateFileCount(allFiles.length);
             } else {
                 console.error('❌ API Error:', data.error);
-                showAlert('danger', 'Dosyalar yüklenirken hata oluştu: ' + data.error);
+                showAlert('danger', '{{ _("messages.operation_failed") }}: ' + data.error);
             }
         })
         .catch(function(error) {
-            console.error('💥 Dosya listesi yüklenirken hata:', error);
-            showAlert('danger', 'Dosya listesi yüklenirken hata oluştu: ' + error.message);
+            console.error('💥 File list loading error:', error);
+            showAlert('danger', '{{ _("messages.operation_failed") }}: ' + error.message);
         });
 }
 
 // Dosyaları görüntüleme
 function displayFiles(files) {
-    console.log('🖼️ displayFiles çağrıldı, dosya sayısı:', files.length);
+    console.log('🖼️ displayFiles called, file count:', files.length);
     
     const noFilesMessage = document.getElementById('noFilesMessage');
     const filesTable = document.getElementById('filesTable');
@@ -150,8 +150,8 @@ function displayFiles(files) {
     if (files.length === 0) {
         noFilesMessage.innerHTML = `
             <i class="bi bi-folder2-open display-4 text-muted"></i>
-            <h5 class="mt-3 text-muted">Henüz dosya bulunamadı</h5>
-            <p class="text-muted">tweet_arsivleri klasörüne JSON dosyalarınızı ekleyin</p>
+            <h5 class="mt-3 text-muted">{{ _('pages.data_selection.no_files') }}</h5>
+            <p class="text-muted">{{ _('pages.data_selection.select_data') }}</p>
         `;
         noFilesMessage.style.display = 'block';
         filesTable.style.display = 'none';
@@ -174,8 +174,8 @@ function displayFiles(files) {
                 <div class="d-flex align-items-center">
                     <i class="bi bi-file-earmark-text text-primary me-2"></i>
                     <div>
-                        <div class="fw-medium">${file.dosya_adi || file.isim || 'Bilinmeyen dosya'}</div>
-                        <small class="text-muted">${file.dosya_yolu || file.yol || 'Bilinmeyen yol'}</small>
+                        <div class="fw-medium">${file.dosya_adi || file.isim || 'Unknown file'}</div>
+                        <small class="text-muted">${file.dosya_yolu || file.yol || 'Unknown path'}</small>
                     </div>
                 </div>
             </td>
@@ -190,10 +190,10 @@ function displayFiles(files) {
             </td>
             <td>
                 <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" onclick="previewFile('${file.id}')" title="Önizleme">
+                    <button class="btn btn-outline-primary" onclick="previewFile('${file.id}')" title="{{ _('buttons.view') }}">
                         <i class="bi bi-eye"></i>
                     </button>
-                    <button class="btn btn-success" onclick="startSingleAnalysis('${file.id}')" title="Analiz Et">
+                    <button class="btn btn-success" onclick="startSingleAnalysis('${file.id}')" title="{{ _('buttons.analyze') }}">
                         <i class="bi bi-play-fill"></i>
                     </button>
                 </div>
@@ -202,7 +202,7 @@ function displayFiles(files) {
         tableBody.appendChild(row);
     });
     
-    console.log('🎯 Dosyalar başarıyla görüntülendi!');
+    console.log('🎯 Files loaded successfully!');
 }
 
 // Dosya seçim işlemleri

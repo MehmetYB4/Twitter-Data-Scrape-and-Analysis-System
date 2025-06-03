@@ -9,6 +9,7 @@ from flask import Blueprint, render_template, current_app
 import os
 import json
 from pathlib import Path
+from app.utils.language import get_text
 
 main_bp = Blueprint('main', __name__)
 
@@ -16,7 +17,7 @@ main_bp = Blueprint('main', __name__)
 def index():
     """Ana sayfa - Dashboard"""
     return render_template('index.html', 
-                         title='Twitter Analiz Platformu',
+                         title=get_text('pages.dashboard.title'),
                          page='dashboard')
 
 @main_bp.route('/veri-secimi')
@@ -49,7 +50,7 @@ def veri_secimi():
                 print(f"Dosya okuma hatası {dosya.name}: {e}")
     
     return render_template('veri_secimi.html', 
-                         title='Veri Seçimi',
+                         title=get_text('pages.data_selection.title'),
                          page='veri-secimi',
                          dosyalar=dosyalar)
 
@@ -57,27 +58,27 @@ def veri_secimi():
 def analiz_konfigurasyonu():
     """Analiz konfigürasyon sayfası"""
     return render_template('analiz_konfigurasyonu.html',
-                         title='Analiz Konfigürasyonu',
+                         title=get_text('pages.analysis_configuration.title'),
                          page='analiz-konfigurasyonu')
 
 @main_bp.route('/sonuclar')
 def sonuclar():
     """Sonuçlar sayfası"""
     return render_template('sonuclar.html',
-                         title='Analiz Sonuçları',
+                         title=get_text('pages.results.title'),
                          page='sonuclar')
 
 @main_bp.route('/test-sonuclar')
 def test_sonuclar():
     """Test sonuçlar sayfası"""
     return render_template('test_sonuclar.html',
-                         title='Test Analiz Sonuçları',
+                         title=get_text('pages.results.title'),
                          page='test-sonuclar')
 
 @main_bp.route('/sonuclar/<analiz_id>')
 def sonuc_detay(analiz_id):
     """Belirli bir analizin detay sayfası"""
     return render_template('sonuc_detay.html',
-                         title=f'Analiz Sonucu - {analiz_id}',
+                         title=f'{get_text("pages.results.title")} - {analiz_id}',
                          page='sonuc-detay',
                          analiz_id=analiz_id) 

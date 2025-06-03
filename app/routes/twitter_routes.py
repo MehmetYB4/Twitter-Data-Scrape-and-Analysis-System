@@ -14,6 +14,7 @@ from flask import Blueprint, render_template, request, jsonify, current_app, fla
 from twikit import Client
 import threading
 import time
+from app.utils.language import get_text
 
 twitter_bp = Blueprint('twitter', __name__)
 
@@ -32,7 +33,7 @@ fetching_status = {
 def twitter_veri_cekme():
     """Twitter veri çekme sayfası"""
     return render_template('twitter_veri_cekme.html',
-                         title='Twitter Veri Çekme',
+                         title=get_text('pages.twitter_data_extraction.title'),
                          page='twitter-veri-cekme')
 
 @twitter_bp.route('/twitter-veri-cekme/basla', methods=['POST'])

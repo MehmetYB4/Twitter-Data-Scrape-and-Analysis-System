@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr" data-bs-theme="light">
+<html lang="{{ language_info.current }}" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{{ title }}{% endblock %} - Twitter Analiz Platformu</title>
+    <title>{% block title %}{{ title }}{% endblock %} - {{ _('common.title_suffix') }}</title>
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' style='font-size:14px'>🐦</text></svg>">
@@ -25,7 +25,7 @@
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('main.index') }}">
                 <i class="bi bi-twitter"></i>
-                Twitter Analiz
+                {{ _('nav.brand') }}
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -37,49 +37,72 @@
                     <li class="nav-item">
                         <a class="nav-link {{ 'active' if page == 'dashboard' else '' }}" 
                            href="{{ url_for('main.index') }}">
-                            <i class="bi bi-house"></i> Dashboard
+                            <i class="bi bi-house"></i> {{ _('nav.dashboard') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ 'active' if page == 'twitter-veri-cekme' else '' }}" 
                            href="{{ url_for('twitter.twitter_veri_cekme') }}">
-                            <i class="bi bi-download"></i> Twitter Veri Çekme
+                            <i class="bi bi-download"></i> {{ _('nav.twitter_data_extraction') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ 'active' if page == 'veri-secimi' else '' }}" 
                            href="{{ url_for('main.veri_secimi') }}">
-                            <i class="bi bi-file-earmark-text"></i> Veri Seçimi
+                            <i class="bi bi-file-earmark-text"></i> {{ _('nav.data_selection') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ 'active' if page == 'analiz-konfigurasyonu' else '' }}" 
                            href="{{ url_for('main.analiz_konfigurasyonu') }}">
-                            <i class="bi bi-gear"></i> Analiz Ayarları
+                            <i class="bi bi-gear"></i> {{ _('nav.analysis_settings') }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {{ 'active' if page == 'sonuclar' else '' }}" 
                            href="{{ url_for('main.sonuclar') }}">
-                            <i class="bi bi-graph-up"></i> Sonuçlar
+                            <i class="bi bi-graph-up"></i> {{ _('nav.results') }}
                         </a>
                     </li>
                 </ul>
                 
                 <ul class="navbar-nav">
+                    <!-- Language Selector -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-translate"></i> {{ _('nav.language') }}
+                            {% for lang_code in language_info.supported %}
+                                {% if lang_code == language_info.current %}
+                                    {{ language_info.info[lang_code].flag }}
+                                {% endif %}
+                            {% endfor %}
+                        </a>
+                        <ul class="dropdown-menu">
+                            {% for lang_code in language_info.supported %}
+                            <li>
+                                <a class="dropdown-item {% if lang_code == language_info.current %}active{% endif %}" 
+                                   href="{{ url_for('language.set_language_route', language_code=lang_code, redirect=request.url) }}">
+                                    {{ language_info.info[lang_code].flag }} {{ language_info.info[lang_code].name }}
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    
+                    <!-- Theme Selector -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="themeDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-palette"></i> Tema
+                            <i class="bi bi-palette"></i> {{ _('nav.theme') }}
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="#" onclick="setTheme('light')">
-                                <i class="bi bi-sun"></i> Açık Tema
+                                <i class="bi bi-sun"></i> {{ _('nav.light_theme') }}
                             </a></li>
                             <li><a class="dropdown-item" href="#" onclick="setTheme('dark')">
-                                <i class="bi bi-moon"></i> Koyu Tema
+                                <i class="bi bi-moon"></i> {{ _('nav.dark_theme') }}
                             </a></li>
                             <li><a class="dropdown-item" href="#" onclick="setTheme('auto')">
-                                <i class="bi bi-circle-half"></i> Otomatik
+                                <i class="bi bi-circle-half"></i> {{ _('nav.auto_theme') }}
                             </a></li>
                         </ul>
                     </li>
@@ -94,7 +117,7 @@
         {% if page != 'dashboard' %}
         <nav aria-label="breadcrumb" class="mb-4">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">{{ _('nav.dashboard') }}</a></li>
                 {% block breadcrumb %}{% endblock %}
             </ol>
         </nav>
@@ -123,15 +146,14 @@
             <div class="row">
                 <div class="col-md-6">
                     <p class="mb-0 text-muted">
-                        &copy; 2024 Twitter Analiz Platformu. 
-                        <small>Doğal Dil İşleme ile güçlendirilmiştir.</small>
+                        &copy; 2024 {{ _('common.copyright') }}
                     </p>
                 </div>
                 <div class="col-md-6 text-end">
                     <div class="d-flex justify-content-end align-items-center">
-                        <span class="text-muted me-3">Sistem Durumu:</span>
+                        <span class="text-muted me-3">{{ _('common.system_status') }}:</span>
                         <span class="badge bg-success" id="systemStatus">
-                            <i class="bi bi-check-circle"></i> Çevrimiçi
+                            <i class="bi bi-check-circle"></i> {{ _('common.online') }}
                         </span>
                     </div>
                 </div>
@@ -145,9 +167,9 @@
             <div class="modal-content">
                 <div class="modal-body text-center py-5">
                     <div class="spinner-border text-primary mb-3" role="status">
-                        <span class="visually-hidden">Yükleniyor...</span>
+                        <span class="visually-hidden">{{ _('common.loading') }}</span>
                     </div>
-                    <h5 id="loadingMessage">İşlem yapılıyor...</h5>
+                    <h5 id="loadingMessage">{{ _('common.processing') }}</h5>
                     <div class="progress mt-3" style="height: 10px;">
                         <div class="progress-bar" role="progressbar" style="width: 0%" id="loadingProgress"></div>
                     </div>

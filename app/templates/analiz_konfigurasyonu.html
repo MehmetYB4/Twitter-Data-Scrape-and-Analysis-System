@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{{ url_for('main.veri_secimi') }}">Veri Seçimi</a></li>
-<li class="breadcrumb-item active" aria-current="page">Analiz Konfigürasyonu</li>
+<li class="breadcrumb-item"><a href="{{ url_for('main.veri_secimi') }}">{{ _('nav.data_selection') }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">{{ _('nav.analysis_settings') }}</li>
 {% endblock %}
 
 {% block subtitle %}
-<p class="text-muted mb-0">Analiz türlerini ve parametrelerini ayarlayın</p>
+<p class="text-muted mb-0">{{ _('pages.analysis_configuration.configure_analysis') }}</p>
 {% endblock %}
 
 {% block content %}
@@ -17,14 +17,14 @@
             <div class="card-header bg-transparent border-0">
                 <h5 class="mb-0">
                     <i class="bi bi-gear text-primary"></i>
-                    Analiz Ayarları
+                    {{ _('pages.analysis_configuration.general_settings') }}
                 </h5>
             </div>
             <div class="card-body">
                 <form id="analysisConfigForm">
                     <!-- Analiz Türleri -->
                     <div class="mb-4">
-                        <h6 class="mb-3">Analiz Türleri</h6>
+                        <h6 class="mb-3">{{ _('pages.analysis_configuration.analysis_type') }}</h6>
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <div class="card h-100">
@@ -32,12 +32,12 @@
                                         <div class="form-check form-switch mb-2">
                                             <input class="form-check-input" type="checkbox" id="enableLDA" checked>
                                             <label class="form-check-label" for="enableLDA">
-                                                <strong>LDA Konu Modelleme</strong>
+                                                <strong>{{ _('pages.analysis_configuration.lda_topic_modeling') }}</strong>
                                             </label>
                                         </div>
                                         <i class="bi bi-tags display-6 text-primary mb-2"></i>
                                         <p class="text-muted small mb-0">
-                                            Tweet'lerdeki gizli konuları keşfedin
+                                            {{ _('pages.analysis_configuration.hidden_topics_description') }}
                                         </p>
                                     </div>
                                 </div>
@@ -48,12 +48,12 @@
                                         <div class="form-check form-switch mb-2">
                                             <input class="form-check-input" type="checkbox" id="enableSentiment" checked>
                                             <label class="form-check-label" for="enableSentiment">
-                                                <strong>Duygu Analizi</strong>
+                                                <strong>{{ _('pages.analysis_configuration.sentiment_analysis') }}</strong>
                                             </label>
                                         </div>
                                         <i class="bi bi-emoji-smile display-6 text-success mb-2"></i>
                                         <p class="text-muted small mb-0">
-                                            Pozitif, negatif, nötr duyguları belirleyin
+                                            {{ _('pages.analysis_configuration.sentiment_description') }}
                                         </p>
                                     </div>
                                 </div>
@@ -64,12 +64,12 @@
                                         <div class="form-check form-switch mb-2">
                                             <input class="form-check-input" type="checkbox" id="enableWordcloud" checked>
                                             <label class="form-check-label" for="enableWordcloud">
-                                                <strong>Kelime Bulutu</strong>
+                                                <strong>{{ _('pages.analysis_configuration.word_cloud') }}</strong>
                                             </label>
                                         </div>
                                         <i class="bi bi-cloud display-6 text-info mb-2"></i>
                                         <p class="text-muted small mb-0">
-                                            En sık kullanılan kelimeleri görselleştirin
+                                            {{ _('pages.analysis_configuration.wordcloud_description') }}
                                         </p>
                                     </div>
                                 </div>
@@ -79,56 +79,56 @@
 
                     <!-- LDA Parametreleri -->
                     <div class="mb-4" id="ldaParams">
-                        <h6 class="mb-3">LDA Parametreleri</h6>
+                        <h6 class="mb-3">{{ _('pages.analysis_configuration.lda_parameters') }}</h6>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="numTopics" class="form-label">
-                                    <strong>Konu Sayısı</strong>
-                                    <small class="text-info">(Analiz kalitesini doğrudan etkiler)</small>
+                                    <strong>{{ _('pages.analysis_configuration.topic_count') }}</strong>
+                                    <small class="text-info">({{ _('pages.analysis_configuration.affects_analysis_quality') }})</small>
                                 </label>
                                 <input type="range" class="form-range" id="numTopics" min="2" max="8" value="5">
                                 <div class="d-flex justify-content-between">
-                                    <small class="text-muted">2 (Hızlı)</small>
+                                    <small class="text-muted">2 ({{ _('pages.analysis_configuration.fast') }})</small>
                                     <small class="text-primary fw-bold" id="topicsValue">5</small>
-                                    <small class="text-muted">8 (Detaylı)</small>
+                                    <small class="text-muted">8 ({{ _('pages.analysis_configuration.detailed') }})</small>
                                 </div>
-                                <small class="text-muted">2-3: Hızlı | 4-5: Optimal | 6-8: Detaylı</small>
+                                <small class="text-muted">{{ _('pages.analysis_configuration.fast_range') }} | {{ _('pages.analysis_configuration.optimal_range') }} | {{ _('pages.analysis_configuration.detailed_range') }}</small>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="ldaIterations" class="form-label">
-                                    <strong>Iterasyon Sayısı</strong>
-                                    <small class="text-warning">(Süreyi önemli ölçüde etkiler)</small>
+                                    <strong>{{ _('pages.analysis_configuration.iteration_count') }}</strong>
+                                    <small class="text-warning">({{ _('pages.analysis_configuration.affects_duration') }})</small>
                                 </label>
                                 <select class="form-select" id="ldaIterations">
-                                    <option value="10">10 (Hızlı - ~30 sn)</option>
-                                    <option value="20" selected>20 (Orta - ~1 dk)</option>
-                                    <option value="50">50 (Yavaş - ~3 dk)</option>
+                                    <option value="10">10 ({{ _('pages.analysis_configuration.fast') }} - ~30s)</option>
+                                    <option value="20" selected>20 ({{ _('pages.analysis_configuration.medium') }} - ~1min)</option>
+                                    <option value="50">50 ({{ _('pages.analysis_configuration.slow') }} - ~3min)</option>
                                 </select>
-                                <small class="text-muted">Yüksek iterasyon = Daha iyi konu ayrımı</small>
+                                <small class="text-muted">{{ _('pages.analysis_configuration.higher_iteration') }}</small>
                             </div>
                         </div>
                     </div>
 
                     <!-- Sentiment Parametreleri -->
                     <div class="mb-4" id="sentimentParams">
-                        <h6 class="mb-3">Duygu Analizi Parametreleri</h6>
+                        <h6 class="mb-3">{{ _('pages.analysis_configuration.sentiment_parameters') }}</h6>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="batchSize" class="form-label">
-                                    <strong>Batch Size</strong>
-                                    <small class="text-success">(GPU bellek kullanımını etkiler)</small>
+                                    <strong>{{ _('pages.analysis_configuration.batch_size') }}</strong>
+                                    <small class="text-success">({{ _('pages.analysis_configuration.affects_gpu_memory') }})</small>
                                 </label>
                                 <select class="form-select" id="batchSize">
-                                    <option value="8">8 (Güvenli - Az RAM)</option>
-                                    <option value="16" selected>16 (Optimal)</option>
-                                    <option value="32">32 (Hızlı - Çok RAM)</option>
+                                    <option value="8">8 ({{ _('pages.analysis_configuration.safe_low_ram') }})</option>
+                                    <option value="16" selected>16 ({{ _('pages.analysis_configuration.optimal') }})</option>
+                                    <option value="32">32 ({{ _('pages.analysis_configuration.fast_high_ram') }})</option>
                                 </select>
-                                <small class="text-muted">Yüksek batch = Hızlı ama daha fazla bellek</small>
+                                <small class="text-muted">{{ _('pages.analysis_configuration.higher_batch') }}</small>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="sentimentModel" class="form-label">Model</label>
+                                <label for="sentimentModel" class="form-label">{{ _('pages.analysis_configuration.model') }}</label>
                                 <select class="form-select" id="sentimentModel">
-                                    <option value="turkish-bert" selected>Turkish BERT (Önerilen)</option>
+                                    <option value="turkish-bert" selected>Turkish BERT ({{ _('pages.analysis_configuration.recommended') }})</option>
                                     <option value="multilingual-bert">Multilingual BERT</option>
                                 </select>
                             </div>
@@ -137,10 +137,10 @@
 
                     <!-- WordCloud Parametreleri -->
                     <div class="mb-4" id="wordcloudParams">
-                        <h6 class="mb-3">Kelime Bulutu Parametreleri</h6>
+                        <h6 class="mb-3">{{ _('pages.analysis_configuration.wordcloud_parameters') }}</h6>
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="maxWords" class="form-label">Maksimum Kelime Sayısı</label>
+                                <label for="maxWords" class="form-label">{{ _('pages.analysis_configuration.max_words') }}</label>
                                 <input type="range" class="form-range" id="maxWords" min="50" max="200" value="100">
                                 <div class="d-flex justify-content-between">
                                     <small class="text-muted">50</small>
@@ -149,7 +149,7 @@
                                 </div>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="colorScheme" class="form-label">Renk Şeması</label>
+                                <label for="colorScheme" class="form-label">{{ _('pages.analysis_configuration.color_scheme') }}</label>
                                 <select class="form-select" id="colorScheme">
                                     <option value="viridis" selected>Viridis</option>
                                     <option value="plasma">Plasma</option>
@@ -162,22 +162,22 @@
 
                     <!-- Genel Ayarlar -->
                     <div class="mb-4">
-                        <h6 class="mb-3">Genel Ayarlar</h6>
+                        <h6 class="mb-3">{{ _('pages.analysis_configuration.general_settings') }}</h6>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="analysisName" class="form-label">
-                                    <strong>Analiz Adı</strong>
-                                    <small class="text-info">(Klasör adında kullanılır)</small>
+                                    <strong>{{ _('common.analysis_name') }}</strong>
+                                    <small class="text-info">({{ _('pages.analysis_configuration.folder_used_in_name') }})</small>
                                 </label>
-                                <input type="text" class="form-control" id="analysisName" placeholder="Otomatik oluşturulacak">
-                                <small class="text-muted">Boş bırakılırsa otomatik isim oluşturulur</small>
+                                <input type="text" class="form-control" id="analysisName" placeholder="{{ _('pages.analysis_configuration.auto_generated') }}">
+                                <small class="text-muted">{{ _('pages.analysis_configuration.empty_auto_name') }}</small>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label for="outputFormat" class="form-label">Çıktı Formatı</label>
+                                <label for="outputFormat" class="form-label">{{ _('pages.analysis_configuration.output_format') }}</label>
                                 <select class="form-select" id="outputFormat">
-                                    <option value="html" selected>HTML (Etkileşimli)</option>
-                                    <option value="png">PNG (Görsel)</option>
-                                    <option value="both">Her İkisi</option>
+                                    <option value="html" selected>{{ _('pages.analysis_configuration.html_interactive') }}</option>
+                                    <option value="png">{{ _('pages.analysis_configuration.png_image') }}</option>
+                                    <option value="both">{{ _('pages.analysis_configuration.both') }}</option>
                                 </select>
                             </div>
                         </div>
@@ -187,14 +187,14 @@
             <div class="card-footer bg-transparent border-0">
                 <div class="d-flex justify-content-between align-items-center">
                     <button type="button" class="btn btn-outline-secondary" onclick="resetToDefaults()">
-                        <i class="bi bi-arrow-clockwise"></i> Varsayılana Dön
+                        <i class="bi bi-arrow-clockwise"></i> {{ _('buttons.reset') }}
                     </button>
                     <div class="btn-group">
                         <button type="button" class="btn btn-outline-primary" onclick="saveConfiguration()">
-                            <i class="bi bi-bookmark"></i> Yapılandırmayı Kaydet
+                            <i class="bi bi-bookmark"></i> {{ _('buttons.save') }}
                         </button>
                         <button type="button" class="btn btn-success" onclick="startAnalysis()">
-                            <i class="bi bi-play-fill"></i> Analizi Başlat
+                            <i class="bi bi-play-fill"></i> {{ _('buttons.start') }}
                         </button>
                     </div>
                 </div>
@@ -209,14 +209,14 @@
             <div class="card-header bg-transparent border-0">
                 <h6 class="mb-0">
                     <i class="bi bi-file-earmark-check text-success"></i>
-                    Seçili Dosyalar
+                    {{ _('pages.analysis_configuration.selected_files') }}
                 </h6>
             </div>
             <div class="card-body">
                 <div id="selectedFilesList">
                     <div class="text-center text-muted py-3">
                         <i class="bi bi-hourglass-split"></i>
-                        <p class="mb-0 small">Dosyalar yükleniyor...</p>
+                        <p class="mb-0 small">{{ _('pages.analysis_configuration.files_loading') }}</p>
                     </div>
                 </div>
             </div>
@@ -227,38 +227,38 @@
             <div class="card-header bg-transparent border-0">
                 <h6 class="mb-0">
                     <i class="bi bi-info-circle text-info"></i>
-                    Analiz Özeti
+                    {{ _('pages.analysis_configuration.analysis_summary') }}
                 </h6>
             </div>
             <div class="card-body">
                 <div class="mb-3">
-                    <small class="text-muted">Seçili Analiz Türleri:</small>
+                    <small class="text-muted">{{ _('pages.analysis_configuration.selected_analysis_types') }}:</small>
                     <div id="selectedAnalysisTypes" class="mt-1">
                         <span class="badge bg-primary me-1">LDA</span>
-                        <span class="badge bg-success me-1">Duygu</span>
-                        <span class="badge bg-info me-1">Kelime Bulutu</span>
+                        <span class="badge bg-success me-1">{{ _('analysis.sentiment.title') }}</span>
+                        <span class="badge bg-info me-1">{{ _('pages.analysis_configuration.word_cloud') }}</span>
                     </div>
                 </div>
                 <div class="mb-3">
-                    <small class="text-muted">Toplam Tweet:</small>
+                    <small class="text-muted">{{ _('pages.analysis_configuration.total_tweets') }}:</small>
                     <div class="fw-bold" id="totalTweets">-</div>
                     <div class="small text-muted">
-                        <span id="selectedFileCount">0</span> dosya • 
+                        <span id="selectedFileCount">0</span> {{ _('pages.data_selection.file_info') }} • 
                         <span id="totalFileSize">0 B</span> • 
-                        <span id="totalTweetCount">0</span> tweet
+                        <span id="totalTweetCount">0</span> {{ _('common.tweet_count') }}
                     </div>
                 </div>
                 <div class="mb-3">
-                    <small class="text-muted">Tahmini Süre:</small>
+                    <small class="text-muted">{{ _('pages.analysis_configuration.estimated_time') }}:</small>
                     <div class="fw-bold" id="estimatedTime">-</div>
                     <div class="small text-muted">
-                        <span id="analysisTypeCount">3</span> analiz türü
-                        <span class="badge bg-success ms-1" id="quickAnalysisBadge" style="display: none;">⚡ Hızlı</span>
+                        <span id="analysisTypeCount">3</span> {{ _('pages.analysis_configuration.analysis_type') }}
+                        <span class="badge bg-success ms-1" id="quickAnalysisBadge" style="display: none;">⚡ {{ _('pages.analysis_configuration.fast') }}</span>
                     </div>
                 </div>
                 <div class="mb-0">
-                    <small class="text-muted">Çıktı Klasörü:</small>
-                    <div class="fw-bold small" id="outputFolder">sonuclar/</div>
+                    <small class="text-muted">{{ _('pages.analysis_configuration.output_folder') }}:</small>
+                    <div class="fw-bold small" id="outputFolder">{{ _('nav.results') }}/</div>
                 </div>
             </div>
         </div>
@@ -268,14 +268,14 @@
             <div class="card-header bg-transparent border-0">
                 <h6 class="mb-0">
                     <i class="bi bi-bookmark text-warning"></i>
-                    Kayıtlı Konfigürasyonlar
+                    {{ _('pages.analysis_configuration.saved_configurations') }}
                 </h6>
             </div>
             <div class="card-body">
                 <div id="savedConfigurations">
                     <div class="text-center text-muted py-3">
                         <i class="bi bi-bookmark"></i>
-                        <p class="mb-0 small">Henüz konfigürasyon kaydedilmemiş</p>
+                        <p class="mb-0 small">{{ _('pages.analysis_configuration.no_saved_configs') }}</p>
                     </div>
                 </div>
             </div>
@@ -1148,7 +1148,13 @@ function saveConfiguration() {
     };
     
     localStorage.setItem('analysisConfig', JSON.stringify(config));
-    showAlert('success', 'Yapılandırma kaydedildi!');
+    
+    // Language-aware success message
+    const currentLang = document.documentElement.lang || 'tr';
+    const message = currentLang === 'en' ? 
+        'Configuration saved!' : 
+        'Yapılandırma kaydedildi!';
+    showAlert('success', message);
 }
 
 function loadConfiguration() {
@@ -1201,7 +1207,7 @@ function loadConfiguration() {
             updateAnalysisSummary();
         }
     } catch (error) {
-        console.error('Yapılandırma yüklenirken hata:', error);
+        console.error('Configuration loading error:', error);
     }
 }
 
@@ -1248,13 +1254,20 @@ function resetToDefaults() {
     
     updateParameterVisibility();
     updateAnalysisSummary();
-    showAlert('info', 'Ayarlar varsayılan değerlere döndürüldü.');
+    
+    // Language-aware reset message
+    const currentLang = document.documentElement.lang || 'tr';
+    const message = currentLang === 'en' ? 
+        'Settings reset to default values.' : 
+        'Ayarlar varsayılan değerlere döndürüldü.';
+    showAlert('info', message);
 }
 
 // Utility functions
 function formatNumber(number) {
     if (typeof number !== 'number') return '0';
-    return number.toLocaleString('tr-TR');
+    const currentLang = document.documentElement.lang || 'tr';
+    return number.toLocaleString(currentLang === 'en' ? 'en-US' : 'tr-TR');
 }
 
 function formatFileSize(bytes) {
@@ -1270,11 +1283,15 @@ function formatFileSize(bytes) {
 }
 
 function formatDate(dateString) {
-    if (!dateString) return 'Bilinmiyor';
+    if (!dateString) {
+        const currentLang = document.documentElement.lang || 'tr';
+        return currentLang === 'en' ? 'Unknown' : 'Bilinmiyor';
+    }
     
     try {
         const date = new Date(dateString);
-        return date.toLocaleString('tr-TR', {
+        const currentLang = document.documentElement.lang || 'tr';
+        return date.toLocaleString(currentLang === 'en' ? 'en-US' : 'tr-TR', {
             year: 'numeric',
             month: '2-digit',
             day: '2-digit',
@@ -1282,7 +1299,8 @@ function formatDate(dateString) {
             minute: '2-digit'
         });
     } catch (error) {
-        return 'Geçersiz tarih';
+        const currentLang = document.documentElement.lang || 'tr';
+        return currentLang === 'en' ? 'Invalid date' : 'Geçersiz tarih';
     }
 }
 
@@ -1321,6 +1339,6 @@ function showAlert(type, message, duration = 5000) {
     }
 }
 
-console.log('🎯 Analiz Konfigürasyonu JavaScript dosyası tamamen yüklendi');
+console.log('🎯 Analysis Configuration JavaScript loaded completely');
 </script>
 {% endblock %} 

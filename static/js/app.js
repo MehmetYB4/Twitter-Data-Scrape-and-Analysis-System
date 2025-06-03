@@ -13,13 +13,15 @@ window.TwitterAnaliz = {
     state: {
         currentAnalysis: null,
         selectedFiles: new Set(),
-        theme: localStorage.getItem('theme') || 'auto'
+        theme: localStorage.getItem('theme') || 'auto',
+        language: document.documentElement.lang || 'tr'
     }
 };
 
 // DOM hazır olduğunda çalışacak fonksiyonlar
 document.addEventListener('DOMContentLoaded', function() {
     initializeTheme();
+    initializeLanguage();
     initializeGlobalEventListeners();
     checkSystemHealth();
 });
@@ -52,6 +54,38 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fun
         setTheme('auto');
     }
 });
+
+/**
+ * Dil Yönetimi
+ */
+function initializeLanguage() {
+    TwitterAnaliz.state.language = document.documentElement.lang || 'tr';
+}
+
+function setLanguage(languageCode) {
+    // API üzerinden dil değişikliği yap
+    fetch('/language/api/set-language', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ language: languageCode })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Sayfa yeniden yükle
+            window.location.reload();
+        } else {
+            console.error('Language change error:', data.message);
+            showAlert('danger', 'Language change failed!');
+        }
+    })
+    .catch(error => {
+        console.error('Language change request error:', error);
+        showAlert('danger', 'Language change failed!');
+    });
+}
 
 /**
  * Global Event Listeners
@@ -87,21 +121,51 @@ function checkSystemHealth() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                updateSystemStatus('online', 'Çevrimiçi');
+                updateSystemStatus('online');
             } else {
-                updateSystemStatus('warning', 'Uyarı');
+                updateSystemStatus('warning');
             }
         })
         .catch(error => {
-            console.error('Sistem sağlık kontrolü hatası:', error);
-            updateSystemStatus('offline', 'Çevrimdışı');
+            console.error('System health check error:', error);
+            updateSystemStatus('offline');
         });
 }
 
-function updateSystemStatus(status, text) {
+function updateSystemStatus(status) {
     const statusElement = document.getElementById('systemStatus');
     if (statusElement) {
         statusElement.className = 'badge';
+        
+        // Get text content based on status and current language
+        let text = '';
+        const currentLang = document.documentElement.lang || 'tr';
+        
+        if (currentLang === 'en') {
+            switch (status) {
+                case 'online':
+                    text = 'Online';
+                    break;
+                case 'warning':
+                    text = 'Warning';
+                    break;
+                case 'offline':
+                    text = 'Offline';
+                    break;
+            }
+        } else {
+            switch (status) {
+                case 'online':
+                    text = 'Çevrimiçi';
+                    break;
+                case 'warning':
+                    text = 'Uyarı';
+                    break;
+                case 'offline':
+                    text = 'Çevrimdışı';
+                    break;
+            }
+        }
         
         switch (status) {
             case 'online':
@@ -130,7 +194,7 @@ const API = {
             const data = await response.json();
             return data;
         } catch (error) {
-            console.error('API GET hatası:', error);
+            console.error('API GET error:', error);
             throw error;
         }
     },
@@ -147,7 +211,7 @@ const API = {
             const result = await response.json();
             return result;
         } catch (error) {
-            console.error('API POST hatası:', error);
+            console.error('API POST error:', error);
             throw error;
         }
     },
@@ -160,7 +224,7 @@ const API = {
             const data = await response.json();
             return data;
         } catch (error) {
-            console.error('API DELETE hatası:', error);
+            console.error('API DELETE error:', error);
             throw error;
         }
     }
@@ -169,7 +233,13 @@ const API = {
 /**
  * Loading Modal Yönetimi
  */
-function showLoading(message = 'İşlem yapılıyor...', progress = 0) {
+function showLoading(message, progress = 0) {
+    // Use default processing message if none provided
+    if (!message) {
+        const currentLang = document.documentElement.lang || 'tr';
+        message = currentLang === 'en' ? 'Processing...' : 'İşlem yapılıyor...';
+    }
+    
     const modal = document.getElementById('loadingModal');
     const messageElement = document.getElementById('loadingMessage');
     const progressElement = document.getElementById('loadingProgress');
@@ -302,7 +372,7 @@ const Storage = {
         try {
             localStorage.setItem(key, JSON.stringify(value));
         } catch (error) {
-            console.error('LocalStorage set hatası:', error);
+            console.error('LocalStorage set error:', error);
         }
     },
     
@@ -311,7 +381,7 @@ const Storage = {
             const item = localStorage.getItem(key);
             return item ? JSON.parse(item) : defaultValue;
         } catch (error) {
-            console.error('LocalStorage get hatası:', error);
+            console.error('LocalStorage get error:', error);
             return defaultValue;
         }
     },
@@ -320,7 +390,7 @@ const Storage = {
         try {
             localStorage.removeItem(key);
         } catch (error) {
-            console.error('LocalStorage remove hatası:', error);
+            console.error('LocalStorage remove error:', error);
         }
     }
 };
@@ -333,7 +403,7 @@ async function copyToClipboard(text) {
         await navigator.clipboard.writeText(text);
         showAlert('success', 'Panoya kopyalandı!', 2000);
     } catch (error) {
-        console.error('Clipboard hatası:', error);
+        console.error('Clipboard error:', error);
         showAlert('danger', 'Panoya kopyalama başarısız!');
     }
 }

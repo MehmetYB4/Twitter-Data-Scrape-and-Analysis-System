@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item active" aria-current="page">Analiz Sonuçları</li>
+<li class="breadcrumb-item active" aria-current="page">{{ _('nav.results') }}</li>
 {% endblock %}
 
 {% block subtitle %}
-<p class="text-muted mb-0">Tamamlanan analizlerin sonuçlarını görüntüleyin ve indirin</p>
+<p class="text-muted mb-0">{{ _('pages.results.subtitle') }}</p>
 {% endblock %}
 
 {% block content %}
@@ -16,26 +16,26 @@
             <div class="card-body">
                 <div class="row g-3 align-items-center">
                     <div class="col-md-4">
-                        <label for="filterStatus" class="form-label">Durum</label>
+                        <label for="filterStatus" class="form-label">{{ _('pages.results.filter_status') }}</label>
                         <select class="form-select" id="filterStatus">
-                            <option value="">Tümü</option>
-                            <option value="tamamlandı">Tamamlandı</option>
-                            <option value="çalışıyor">Çalışıyor</option>
-                            <option value="hata">Hata</option>
+                            <option value="">{{ _('common.all') }}</option>
+                            <option value="tamamlandı">{{ _('pages.results.completed') }}</option>
+                            <option value="çalışıyor">{{ _('pages.results.running') }}</option>
+                            <option value="hata">{{ _('pages.results.error') }}</option>
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label for="filterType" class="form-label">Analiz Türü</label>
+                        <label for="filterType" class="form-label">{{ _('pages.results.filter_type') }}</label>
                         <select class="form-select" id="filterType">
-                            <option value="">Tümü</option>
+                            <option value="">{{ _('common.all') }}</option>
                             <option value="lda">LDA</option>
-                            <option value="sentiment">Duygu Analizi</option>
-                            <option value="wordcloud">Kelime Bulutu</option>
+                            <option value="sentiment">{{ _('pages.analysis_configuration.sentiment_analysis') }}</option>
+                            <option value="wordcloud">{{ _('pages.analysis_configuration.word_cloud') }}</option>
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label for="searchQuery" class="form-label">Arama</label>
-                        <input type="text" class="form-control" id="searchQuery" placeholder="Analiz adı veya dosya adı...">
+                        <label for="searchQuery" class="form-label">{{ _('common.search') }}</label>
+                        <input type="text" class="form-control" id="searchQuery" placeholder="{{ _('pages.results.search_placeholder') }}">
                     </div>
                 </div>
             </div>
@@ -46,15 +46,15 @@
             <div class="card-body text-center">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <small class="text-muted">Toplam Analiz</small>
+                        <small class="text-muted">{{ _('pages.results.total_analyses') }}</small>
                         <div class="h5 mb-0" id="totalAnalyses">-</div>
                     </div>
                     <div>
-                        <small class="text-muted">Tamamlanan</small>
+                        <small class="text-muted">{{ _('pages.results.completed_analyses') }}</small>
                         <div class="h5 mb-0 text-success" id="completedAnalyses">-</div>
                     </div>
                     <div>
-                        <small class="text-muted">Çalışan</small>
+                        <small class="text-muted">{{ _('pages.results.running_analyses') }}</small>
                         <div class="h5 mb-0 text-info" id="runningAnalyses">-</div>
                     </div>
                 </div>
@@ -69,9 +69,9 @@
     <div class="col-12">
         <div class="text-center py-5" id="loadingState">
             <div class="spinner-border text-primary mb-3" role="status">
-                <span class="visually-hidden">Yükleniyor...</span>
+                <span class="visually-hidden">{{ _('common.loading') }}</span>
             </div>
-            <h5>Analiz sonuçları yükleniyor...</h5>
+            <h5>{{ _('pages.results.loading_results') }}</h5>
         </div>
     </div>
     
@@ -79,10 +79,10 @@
     <div class="col-12" id="emptyState" style="display: none;">
         <div class="text-center py-5">
             <i class="bi bi-inbox display-1 text-muted"></i>
-            <h3 class="mt-3 text-muted">Henüz analiz sonucu yok</h3>
-            <p class="text-muted mb-4">İlk analizinizi başlatmak için veri seçimi sayfasına gidin</p>
+            <h3 class="mt-3 text-muted">{{ _('pages.results.no_analysis_yet') }}</h3>
+            <p class="text-muted mb-4">{{ _('pages.results.start_first_analysis') }}</p>
             <a href="{{ url_for('main.veri_secimi') }}" class="btn btn-primary">
-                <i class="bi bi-play-fill"></i> Analiz Başlat
+                <i class="bi bi-play-fill"></i> {{ _('pages.results.start_analysis') }}
             </a>
         </div>
     </div>
@@ -93,12 +93,12 @@
     <div class="col-lg-6 col-xl-4 mb-4 result-card" data-status="" data-type="">
         <div class="card border-0 shadow-sm h-100">
             <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
-                <h6 class="mb-0 result-title">Analiz Adı</h6>
-                <span class="badge result-status-badge">Durum</span>
+                <h6 class="mb-0 result-title">{{ _('common.analysis_name') }}</h6>
+                <span class="badge result-status-badge">{{ _('common.status') }}</span>
             </div>
             <div class="card-body">
                 <div class="mb-3">
-                    <small class="text-muted">Analiz Türleri:</small>
+                    <small class="text-muted">{{ _('pages.results.analysis_types') }}:</small>
                     <div class="result-types mt-1">
                         <!-- Analysis type badges will be inserted here -->
                     </div>
@@ -106,24 +106,24 @@
                 
                 <div class="row g-2 mb-3">
                     <div class="col-6">
-                        <small class="text-muted">Başlangıç:</small>
+                        <small class="text-muted">{{ _('common.start_date') }}:</small>
                         <div class="small fw-medium result-start-date">-</div>
                     </div>
                     <div class="col-6">
-                        <small class="text-muted">Süre:</small>
+                        <small class="text-muted">{{ _('common.duration') }}:</small>
                         <div class="small fw-medium result-duration">-</div>
                     </div>
                 </div>
                 
                 <div class="mb-3">
-                    <small class="text-muted">Tweet Sayısı:</small>
+                    <small class="text-muted">{{ _('common.tweet_count') }}:</small>
                     <div class="fw-bold result-tweet-count">-</div>
                 </div>
                 
                 <!-- Progress bar for running analyses -->
                 <div class="progress-container" style="display: none;">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <small class="text-muted">İlerleme:</small>
+                        <small class="text-muted">{{ _('common.progress') }}:</small>
                         <small class="progress-text">0%</small>
                     </div>
                     <div class="progress mb-3" style="height: 8px;">
@@ -135,7 +135,7 @@
                 <div class="d-grid gap-2">
                     <div class="btn-group result-actions">
                         <button class="btn btn-primary btn-sm view-results" disabled>
-                            <i class="bi bi-eye"></i> Sonuçları Görüntüle
+                            <i class="bi bi-eye"></i> {{ _('pages.results.view_results_btn') }}
                         </button>
                         <button class="btn btn-outline-secondary btn-sm dropdown-toggle dropdown-toggle-split" 
                                 data-bs-toggle="dropdown" disabled>
@@ -143,14 +143,14 @@
                         </button>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item download-results" href="#">
-                                <i class="bi bi-download"></i> İndir
+                                <i class="bi bi-download"></i> {{ _('buttons.download') }}
                             </a></li>
                             <li><a class="dropdown-item share-results" href="#">
-                                <i class="bi bi-share"></i> Paylaş
+                                <i class="bi bi-share"></i> {{ _('pages.results.share') }}
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger delete-results" href="#">
-                                <i class="bi bi-trash"></i> Sil
+                                <i class="bi bi-trash"></i> {{ _('buttons.delete') }}
                             </a></li>
                         </ul>
                     </div>
@@ -166,7 +166,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="bi bi-graph-up"></i> Analiz Detayları
+                    <i class="bi bi-graph-up"></i> {{ _('pages.results.analysis_details') }}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -174,16 +174,16 @@
                 <div id="analysisDetailContent">
                     <div class="text-center py-4">
                         <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Yükleniyor...</span>
+                            <span class="visually-hidden">{{ _('common.loading') }}</span>
                         </div>
-                        <p class="mt-2">Analiz detayları yükleniyor...</p>
+                        <p class="mt-2">{{ _('pages.results.analysis_details_loading') }}</p>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('buttons.close') }}</button>
                 <button type="button" class="btn btn-primary" id="openFullResults">
-                    <i class="bi bi-arrows-fullscreen"></i> Tam Ekran Görüntüle
+                    <i class="bi bi-arrows-fullscreen"></i> {{ _('pages.results.full_screen_view') }}
                 </button>
             </div>
         </div>
@@ -197,10 +197,55 @@ let allResults = [];
 let filteredResults = [];
 let refreshInterval;
 
+// Language-aware text helper functions
+function getText(key, fallback = '') {
+    const currentLang = document.documentElement.lang || 'tr';
+    
+    const translations = {
+        'tr': {
+            'error_loading_results': 'Analiz sonuçları yüklenirken hata oluştu',
+            'running': 'Devam ediyor',
+            'completed': 'Tamamlandı',
+            'error': 'Hata',
+            'pending': 'Beklemede',
+            'sentiment': 'Duygu',
+            'wordcloud': 'Kelime Bulutu',
+            'lda': 'LDA',
+            'minute': 'dakika',
+            'hour': 's',
+            'min_short': 'd',
+            'starting_download': 'İndirme işlemi başlatılıyor...',
+            'twitter_analysis_result': 'Twitter Analiz Sonucu',
+            'delete_confirm': 'Bu analiz sonucunu silmek istediğinizden emin misiniz?',
+            'deleting_analysis': 'Analiz sonucu siliniyor...'
+        },
+        'en': {
+            'error_loading_results': 'Error loading analysis results',
+            'running': 'Running',
+            'completed': 'Completed',
+            'error': 'Error',
+            'pending': 'Pending',
+            'sentiment': 'Sentiment',
+            'wordcloud': 'Word Cloud',
+            'lda': 'LDA',
+            'minute': 'min',
+            'hour': 'h',
+            'min_short': 'm',
+            'starting_download': 'Starting download...',
+            'twitter_analysis_result': 'Twitter Analysis Result',
+            'delete_confirm': 'Are you sure you want to delete this analysis result?',
+            'deleting_analysis': 'Deleting analysis result...'
+        }
+    };
+    
+    return translations[currentLang]?.[key] || fallback || key;
+}
+
 // Yardımcı fonksiyonlar
 function formatDate(dateString) {
     const date = new Date(dateString);
-    return date.toLocaleString('tr-TR', {
+    const currentLang = document.documentElement.lang || 'tr';
+    return date.toLocaleString(currentLang === 'en' ? 'en-US' : 'tr-TR', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
@@ -210,13 +255,14 @@ function formatDate(dateString) {
 }
 
 function formatNumber(number) {
-    return number.toLocaleString('tr-TR');
+    const currentLang = document.documentElement.lang || 'tr';
+    return number.toLocaleString(currentLang === 'en' ? 'en-US' : 'tr-TR');
 }
 
 function showAlert(type, message, duration = 5000) {
     const alertContainer = document.getElementById('alertContainer');
     if (!alertContainer) {
-        console.error('Alert container bulunamadı!');
+        console.error('Alert container not found!');
         alert(message);
         return;
     }
@@ -250,10 +296,10 @@ function showAlert(type, message, duration = 5000) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Sonuçlar sayfası yüklendi - DOM hazır');
+    console.log('🚀 Results page loaded - DOM ready');
     
     // Load results
-    console.log('📋 loadResults() çağrılıyor...');
+    console.log('📋 Calling loadResults()...');
     loadResults();
     
     // Setup filters
@@ -271,20 +317,20 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function loadResults() {
-    console.log('📊 loadResults başlatıldı - API çağrısı yapılıyor...');
+    console.log('📊 loadResults started - Making API call...');
     
     // Loading state'i göster
     const loadingState = document.getElementById('loadingState');
     const emptyState = document.getElementById('emptyState');
     if (loadingState) {
         loadingState.style.display = 'block';
-        console.log('🔄 Loading state gösteriliyor');
+        console.log('🔄 Showing loading state');
     }
     if (emptyState) {
         emptyState.style.display = 'none';
     }
     
-    // Gerçek API'den analiz listesini çek
+    // Get analysis list from API
     fetch('/analiz/liste')
         .then(response => {
             console.log('📡 API Response Status:', response.status);
@@ -298,17 +344,17 @@ function loadResults() {
             console.log('📦 API Response Data (raw):', data);
             console.log('📦 Data success:', data.success);
             console.log('📦 Data total:', data.total);
-            console.log('📦 Data length:', data.data ? data.data.length : 'data.data yok');
+            console.log('📦 Data length:', data.data ? data.data.length : 'data.data not found');
             
             if (data.success) {
-                console.log('✅ API başarılı - veri işleniyor...');
+                console.log('✅ API successful - processing data...');
                 
                 allResults = data.data.map(analiz => {
-                    console.log('🔄 İşlenen analiz:', analiz.name, '- Status:', analiz.status);
+                    console.log('🔄 Processing analysis:', analiz.name, '- Status:', analiz.status);
                     return {
                         id: analiz.id,
                         name: analiz.name,
-                        status: mapStatusToTurkish(analiz.status),
+                        status: mapStatusToLocal(analiz.status),
                         types: analiz.types || [],
                         startDate: analiz.startDate,
                         endDate: analiz.endDate,
@@ -319,35 +365,38 @@ function loadResults() {
                     };
                 });
                 
-                console.log('✅ Toplam yüklenen analiz sayısı:', allResults.length);
+                console.log('✅ Total loaded analyses:', allResults.length);
                 console.log('📋 allResults:', allResults);
                 
                 applyFilters();
                 updateStatistics();
             } else {
                 console.error('❌ API Success=false, Error:', data.error);
-                showAlert('danger', 'Analiz sonuçları yüklenirken hata oluştu: ' + data.error);
+                const errorMsg = getText('error_loading_results') + ': ' + data.error;
+                showAlert('danger', errorMsg);
                 
-                // Hata durumunda boş liste göster
+                // Show empty list on error
                 allResults = [];
                 applyFilters();
                 updateStatistics();
             }
         })
         .catch(error => {
-            console.error('💥 Fetch hatası:', error);
+            console.error('💥 Fetch error:', error);
             console.error('💥 Error message:', error.message);
-            showAlert('danger', 'Analiz sonuçları yüklenirken hata oluştu: ' + error.message);
+            const errorMsg = getText('error_loading_results') + ': ' + error.message;
+            showAlert('danger', errorMsg);
             
-            // Hata durumunda boş liste göster
+            // Show empty list on error
             allResults = [];
             applyFilters();
             updateStatistics();
         });
 }
 
-// Durum isimlerini Türkçe'ye çevir
-function mapStatusToTurkish(status) {
+// Map status names to local language
+function mapStatusToLocal(status) {
+    // Keep original status values for backend compatibility
     const statusMap = {
         'tamamlandı': 'tamamlandı',
         'completed': 'tamamlandı',
@@ -373,14 +422,14 @@ function setupFilters() {
 }
 
 function applyFilters() {
-    console.log('🔍 applyFilters başlatıldı');
-    console.log('🔍 allResults uzunluğu:', allResults.length);
+    console.log('🔍 applyFilters started');
+    console.log('🔍 allResults length:', allResults.length);
     
     const statusFilter = document.getElementById('filterStatus').value;
     const typeFilter = document.getElementById('filterType').value;
     const searchFilter = document.getElementById('searchQuery').value.toLowerCase();
     
-    console.log('🔍 Filtreler - Status:', statusFilter, 'Type:', typeFilter, 'Search:', searchFilter);
+    console.log('🔍 Filters - Status:', statusFilter, 'Type:', typeFilter, 'Search:', searchFilter);
     
     filteredResults = allResults.filter(result => {
         // Status filter
@@ -395,65 +444,65 @@ function applyFilters() {
         return true;
     });
     
-    console.log('✅ Filtrelenmiş sonuç sayısı:', filteredResults.length);
+    console.log('✅ Filtered results count:', filteredResults.length);
     console.log('📋 filteredResults:', filteredResults);
     
     displayResults();
 }
 
 function displayResults() {
-    console.log('🖼️ displayResults başlatıldı');
-    console.log('🖼️ Görüntülenecek sonuç sayısı:', filteredResults.length);
+    console.log('🖼️ displayResults started');
+    console.log('🖼️ Results to display:', filteredResults.length);
     
     const container = document.getElementById('resultsContainer');
     const loadingState = document.getElementById('loadingState');
     const emptyState = document.getElementById('emptyState');
     
-    console.log('🖼️ Container element:', container ? 'Bulundu' : 'Bulunamadı');
-    console.log('🖼️ Loading state element:', loadingState ? 'Bulundu' : 'Bulunamadı');
-    console.log('🖼️ Empty state element:', emptyState ? 'Bulundu' : 'Bulunamadı');
+    console.log('🖼️ Container element:', container ? 'Found' : 'Not found');
+    console.log('🖼️ Loading state element:', loadingState ? 'Found' : 'Not found');
+    console.log('🖼️ Empty state element:', emptyState ? 'Found' : 'Not found');
     
     // Hide loading state
     if (loadingState) {
         loadingState.style.display = 'none';
-        console.log('🖼️ Loading state gizlendi');
+        console.log('🖼️ Loading state hidden');
     }
     
     if (filteredResults.length === 0) {
-        console.log('⚠️ Hiç sonuç yok - empty state gösteriliyor');
+        console.log('⚠️ No results - showing empty state');
         if (emptyState) {
             emptyState.style.display = 'block';
         }
         // Clear any existing cards
         const existingCards = container.querySelectorAll('.result-card');
         existingCards.forEach(card => card.remove());
-        console.log('🧹 Mevcut kartlar temizlendi');
+        console.log('🧹 Existing cards cleared');
         return;
     }
     
-    console.log('✅ Sonuçlar var - kartlar oluşturuluyor');
+    console.log('✅ Results available - creating cards');
     if (emptyState) {
         emptyState.style.display = 'none';
     }
     
     // Clear existing cards
     const existingCards = container.querySelectorAll('.result-card');
-    console.log('🧹 Temizlenecek mevcut kart sayısı:', existingCards.length);
+    console.log('🧹 Existing cards to clear:', existingCards.length);
     existingCards.forEach(card => card.remove());
     
     // Create cards for each result
     filteredResults.forEach((result, index) => {
-        console.log(`🃏 Kart ${index + 1} oluşturuluyor:`, result.name);
+        console.log(`🃏 Creating card ${index + 1}:`, result.name);
         const card = createResultCard(result);
         if (card && container) {
             container.appendChild(card);
-            console.log(`✅ Kart ${index + 1} container'a eklendi`);
+            console.log(`✅ Card ${index + 1} added to container`);
         } else {
-            console.error(`❌ Kart ${index + 1} eklenemedi - card:`, card, 'container:', container);
+            console.error(`❌ Card ${index + 1} could not be added - card:`, card, 'container:', container);
         }
     });
     
-    console.log('✅ Tüm kartlar oluşturuldu ve eklendi');
+    console.log('✅ All cards created and added');
 }
 
 function createResultCard(result) {
@@ -489,7 +538,7 @@ function createResultCard(result) {
         const duration = calculateDuration(result.startDate, result.endDate);
         card.querySelector('.result-duration').textContent = duration;
     } else {
-        card.querySelector('.result-duration').textContent = 'Devam ediyor';
+        card.querySelector('.result-duration').textContent = getText('running');
     }
     
     // Set tweet count
@@ -541,10 +590,10 @@ function createResultCard(result) {
 
 function getStatusText(status) {
     const statusTexts = {
-        'tamamlandı': 'Tamamlandı',
-        'çalışıyor': 'Çalışıyor',
-        'hata': 'Hata',
-        'beklemede': 'Beklemede'
+        'tamamlandı': getText('completed'),
+        'çalışıyor': getText('running'),
+        'hata': getText('error'),
+        'beklemede': getText('pending')
     };
     return statusTexts[status] || status;
 }
@@ -561,9 +610,9 @@ function getStatusBadgeClass(status) {
 
 function getTypeText(type) {
     const typeTexts = {
-        'lda': 'LDA',
-        'sentiment': 'Duygu',
-        'wordcloud': 'Kelime Bulutu'
+        'lda': getText('lda'),
+        'sentiment': getText('sentiment'),
+        'wordcloud': getText('wordcloud')
     };
     return typeTexts[type] || type;
 }
@@ -584,11 +633,11 @@ function calculateDuration(startDate, endDate) {
     const diffMins = Math.round(diffMs / 60000);
     
     if (diffMins < 60) {
-        return `${diffMins} dakika`;
+        return `${diffMins} ${getText('minute')}`;
     } else {
         const hours = Math.floor(diffMins / 60);
         const mins = diffMins % 60;
-        return `${hours}s ${mins}d`;
+        return `${hours}${getText('hour')} ${mins}${getText('min_short')}`;
     }
 }
 
@@ -603,20 +652,23 @@ function updateStatistics() {
 }
 
 function viewResults(analysisId) {
-    // Sonuç detay sayfasına yönlendir
+    // Redirect to result detail page
     window.location.href = `/sonuclar/${analysisId}`;
 }
 
 function downloadResults(analysisId) {
-    showAlert('info', 'İndirme işlemi başlatılıyor...');
-    // TODO: İndirme API'si implement edilecek
+    const message = getText('starting_download');
+    showAlert('info', message);
+    // TODO: Implement download API
 }
 
 function shareResults(analysisId) {
     const shareUrl = `${window.location.origin}/sonuclar/${analysisId}`;
+    const title = getText('twitter_analysis_result');
+        
     if (navigator.share) {
         navigator.share({
-            title: 'Twitter Analiz Sonucu',
+            title: title,
             url: shareUrl
         });
     } else {
@@ -625,12 +677,28 @@ function shareResults(analysisId) {
 }
 
 function deleteResults(analysisId) {
-    if (confirm('Bu analiz sonucunu silmek istediğinizden emin misiniz?')) {
-        showAlert('info', 'Analiz sonucu siliniyor...');
-        // TODO: Silme API'si implement edilecek
+    const confirmMsg = getText('delete_confirm');
+    const deletingMsg = getText('deleting_analysis');
+        
+    if (confirm(confirmMsg)) {
+        showAlert('info', deletingMsg);
+        // TODO: Implement delete API
     }
 }
 
-// Debounce function is already defined in app.js
+// Debounce function for search input
+function debounce(func, wait, immediate) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            timeout = null;
+            if (!immediate) func(...args);
+        };
+        const callNow = immediate && !timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+        if (callNow) func(...args);
+    };
+}
 </script>
 {% endblock %} 
