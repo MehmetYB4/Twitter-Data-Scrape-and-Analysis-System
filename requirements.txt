@@ -25,12 +25,3 @@ tqdm==4.66.1
 Pillow==10.1.0
 requests==2.31.0
 
-# Gelişmiş Ön İşleme (Yeni)
-unicodedata2>=15.0.0  # Unicode normalizasyon için (Python'da built-in ama ek özellikler için)
-
-# Not: unicodedata Python'da built-in olduğu için normalde gerekli değil
-# Ama daha gelişmiş unicode işlemleri için unicodedata2 paketi kullanılabilir
-
-# Regex işlemleri (built-in re modülü kullanılıyor)
-# Collections (built-in collections modülü kullanılıyor)
-# String işlemleri (built-in string modülü kullanılıyor) 
